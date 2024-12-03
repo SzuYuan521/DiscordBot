@@ -19,7 +19,13 @@ namespace DiscordBot.Services
             _configuration = configuration;
             _logger = logger;
             _commandService = commandService;
-            _client = new DiscordSocketClient();
+            var config = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.Guilds |
+                     GatewayIntents.GuildMessages |
+                     GatewayIntents.MessageContent
+            };
+            _client = new DiscordSocketClient(config);
         }
 
         public async Task StartAsync()
@@ -30,6 +36,9 @@ namespace DiscordBot.Services
             var token = _configuration["DiscordBot:Token"];
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
+
+            // 防止方法立即結束
+            await Task.Delay(-1);
         }
 
         private Task LogAsync(LogMessage log)
@@ -45,7 +54,7 @@ namespace DiscordBot.Services
 
             if (message.Content.StartsWith("/"))
             {
-                var response = _commandService.GetResponse(message.Content);
+                var response = await _commandService.GetResponse(message.Content);
 
                 if (!string.IsNullOrEmpty(response))
                 {

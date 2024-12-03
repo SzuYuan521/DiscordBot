@@ -20,7 +20,7 @@ namespace DiscordBot.Controllers
 
         // 查詢指令回應的API
         [HttpPost]
-        public IActionResult ExecuteCommand(string command)
+        public async Task<IActionResult> ExecuteCommand(string command)
         {
             if (string.IsNullOrEmpty(command))
             {
@@ -28,7 +28,7 @@ namespace DiscordBot.Controllers
                 return View("Index");
             }
 
-            var response = _commandService.GetResponse(command);
+            var response = await _commandService.GetResponse(command);
 
             if (!string.IsNullOrEmpty(response))
             {
