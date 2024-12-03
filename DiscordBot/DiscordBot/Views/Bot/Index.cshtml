@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "指令查詢";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div>
+    <form method="post" action="/Bot/ExecuteCommand">
+        <div class="form-group">
+            <label for="command">請輸入指令:</label>
+            <input type="text" class="form-control" id="command" name="command" placeholder="/pve 攻略" required>
+        </div>
+        <button type="submit" class="btn btn-primary">查詢</button>
+    </form>
+</div>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">
+        <strong>回應:</strong> @ViewBag.Message
+    </div>
+}
