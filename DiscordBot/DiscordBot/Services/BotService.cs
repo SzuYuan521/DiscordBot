@@ -33,8 +33,15 @@ namespace DiscordBot.Services
             _client.Log += LogAsync;
             _client.MessageReceived += MessageReceivedAsync;
 
-            var token = _configuration["DiscordBot:Token"];
-            await _client.LoginAsync(TokenType.Bot, token);
+            string discordBotToken = Environment.GetEnvironmentVariable("DISCORDBOT_TOKEN");
+
+            Debug.WriteLine("discordToken = " + discordBotToken);
+
+            if (string.IsNullOrEmpty(discordBotToken))
+            {
+                throw new Exception("Discord token is missing!");
+            }
+            await _client.LoginAsync(TokenType.Bot, discordBotToken);
             await _client.StartAsync();
 
             // 防止方法立即結束

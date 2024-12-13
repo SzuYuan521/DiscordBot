@@ -1,41 +1,30 @@
-name: Deploy .NET 8 Web App
+name: Deploy Discord Bot
 
-# 定義觸發條件
 on:
   push:
     branches:
-      - dev # 當推送到 dev 分支時觸發
-  pull_request: # 當有 Pull Request 時也觸發
-    branches:
       - dev
 
-# 定義作業
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest # 運行環境
+  build-and-run:
+    runs-on: ubuntu-latest
 
     steps:
-      # 檢出代碼
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 安裝 .NET SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0
 
-      # 還原依賴項
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore DiscordBot/DiscordBot/DiscordBot.sln  # 確保指定解決方案文件
 
-      # 構建專案
       - name: Build project
-        run: dotnet build --configuration Release
+        run: dotnet build DiscordBot/DiscordBot/DiscordBot.sln --configuration Release  # 確保指定解決方案文件
 
-      # 部署或運行應用
-      - name: Deploy application
+      - name: Run Discord Bot
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORDBOT_TOKEN }} # 引用 GitHub Secrets
-        run: |
-          dotnet run --project DiscordBot
+          DISCORD_TOKEN: ${{ secrets.DISCORDBOT_TOKEN }}  # 設置環境變數
+        run: dotnet run --project DiscordBot/DiscordBot/DiscordBot/DiscordBot.csproj  # 確保專案路徑正確
