@@ -3,20 +3,24 @@ using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ³]©w EPPlus ªº±ÂÅv¤W¤U¤å¬°«D°Ó·~¥Î³~
+// è¨­å®š ExcelPackage çš„æˆæ¬Šç‚ºéå•†æ¥­ç”¨é€”
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+// åŠ å…¥Renderç«¯å£é…ç½®
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseKestrel(options =>
+{
+    options.ListenAnyIP(int.Parse(port));
+});
+
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
-
-// µù¥UªA°È
 builder.Services.AddSingleton<CommandService>();
 builder.Services.AddSingleton<BotService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// ±Ò°Ê Discord Bot
+// å–å¾— BotService æœå‹™ä¸¦å•Ÿå‹• Discord æ©Ÿå™¨äºº
 var discordBotService = app.Services.GetRequiredService<BotService>();
 await discordBotService.StartAsync();
 
