@@ -4,9 +4,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 # 設定應用程式工作目錄
 WORKDIR /app
 
-# 使用 Render 指定的端口
-ENV ASPNETCORE_URLS=http://+:8080
-
 # 開放端口 8080
 EXPOSE 8080
 
