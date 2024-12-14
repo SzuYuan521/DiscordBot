@@ -10,6 +10,9 @@ ENV ASPNETCORE_URLS=http://+:8080
 # 開放端口 8080
 EXPOSE 8080
 
+# 設置環境變量
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+
 # 使用 .NET 8 SDK 來建立應用
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
