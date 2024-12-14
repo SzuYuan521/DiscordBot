@@ -4,11 +4,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 # 設定應用程式工作目錄
 WORKDIR /app
 
-# 開放端口 8080
-EXPOSE 8080
+# 開放端口 10000
+EXPOSE 10000
 
 # 設置環境變量
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+ENV ASPNETCORE_URLS=http://0.0.0.0:10000
 
 # 使用 .NET 8 SDK 來建立應用
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
