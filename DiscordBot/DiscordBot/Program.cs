@@ -21,11 +21,30 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// 加入健康檢查路由
+app.MapGet("/", () => "App is running.");
+
+// 啟動 Discord Bot
+var isBotReady = false;
+
+Task.Run(async () =>
+{
+    var discordBotService = app.Services.GetRequiredService<BotService>();
+    await discordBotService.StartAsync();
+    isBotReady = true;
+});
+
+app.MapGet("/health", () => isBotReady ? Results.Ok("Bot is ready.") : Results.StatusCode(503));
+
+
+
+/*
 // 取得 BotService 服務並啟動 Discord 機器人
 var discordBotService = app.Services.GetRequiredService<BotService>();
-await discordBotService.StartAsync();
+await discordBotService.StartAsync();*/
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Bot}/{action=Index}/{id?}");
+
 app.Run();
