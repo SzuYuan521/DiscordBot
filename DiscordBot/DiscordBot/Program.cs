@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // 加入Render端口配置
-var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 Console.WriteLine($"Using port: {port}");
 builder.WebHost.UseKestrel(options =>
 {
