@@ -25,6 +25,12 @@ namespace DiscordBot.Services
         // 根據指令查詢並返回回應
         public async Task<string> GetResponse(string command)
         {
+            if (!File.Exists(_filePath))
+            {
+                Console.WriteLine("找不到Commands.xlsx");
+                return "指令功能錯誤，請聯繫開發人員。";
+            }
+
             command = command.Trim().ToLower();
 
             string sheetName = string.Empty;
@@ -50,11 +56,12 @@ namespace DiscordBot.Services
 
                     if (sheet != null)
                     {
-                        response = await SearchCommand(sheet, command);
+                        response = SearchCommand(sheet, command);
                     }
                     else
                     {
-                        response = "找不到表單";
+                        Console.WriteLine("找不到Commands.xlsx");
+                        response = "找不到指令";
                     }
                 }
             }
@@ -63,7 +70,7 @@ namespace DiscordBot.Services
         }
 
         // 搜尋指定表中的指令
-        private async Task<string> SearchCommand(ExcelWorksheet sheet, string command)
+        private string SearchCommand(ExcelWorksheet sheet, string command)
         {
             var rowCount = sheet.Dimension.Rows;
             for (int row = 1; row <= rowCount; row++)
