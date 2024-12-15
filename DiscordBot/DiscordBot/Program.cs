@@ -21,9 +21,6 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// 加入健康檢查路由
-app.MapGet("/", () => "App is running.");
-
 // 啟動 Discord Bot
 var isBotReady = false;
 
@@ -33,9 +30,6 @@ Task.Run(async () =>
     await discordBotService.StartAsync();
     isBotReady = true;
 });
-
-app.MapGet("/health", () => isBotReady ? Results.Ok("Bot is ready.") : Results.StatusCode(503));
-
 
 
 /*
