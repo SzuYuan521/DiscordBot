@@ -3,24 +3,24 @@ using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ³]©w EPPlus ªº±ÂÅv¤W¤U¤å¬°«D°Ó·~¥Î³~
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 
-// µù¥UªA°È
+
 builder.Services.AddSingleton<CommandService>();
 builder.Services.AddSingleton<BotService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// ±Ò°Ê Discord Bot
 var discordBotService = app.Services.GetRequiredService<BotService>();
-await discordBotService.StartAsync();
+Task.Run(() => discordBotService.StartAsync());  // æ”¾å…¥ Task.Run ä»¥è®“å…¶åœ¨èƒŒæ™¯åŸ·è¡Œ
+//await discordBotService.StartAsync();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Bot}/{action=Index}/{id?}");
+
 app.Run();

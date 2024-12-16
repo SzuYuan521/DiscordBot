@@ -30,16 +30,24 @@ namespace DiscordBot.Services
 
         public async Task StartAsync()
         {
-            _client.Log += LogAsync;
-            _client.MessageReceived += MessageReceivedAsync;
+            try
+            {
+                _client.Log += LogAsync;
+                _client.MessageReceived += MessageReceivedAsync;
 
-            var token = _configuration["DiscordBot:Token"];
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();
+                var token = _configuration["DiscordBot:Token"];
+                await _client.LoginAsync(TokenType.Bot, token);
+                await _client.StartAsync();
 
-            // 防止方法立即結束
-            await Task.Delay(-1);
+                // 防止方法立即結束
+                await Task.Delay(-1);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Bot initialization failed: {ex.Message}");
+            }
         }
+
 
         private Task LogAsync(LogMessage log)
         {
@@ -55,6 +63,7 @@ namespace DiscordBot.Services
             if (message.Content.StartsWith("/"))
             {
                 var response = await _commandService.GetResponse(message.Content);
+                Console.WriteLine(message.Channel.Id);
 
                 if (!string.IsNullOrEmpty(response))
                 {
@@ -64,6 +73,24 @@ namespace DiscordBot.Services
                 {
                     await message.Channel.SendMessageAsync("未找到對應的指令");
                 }
+            }
+        }
+
+        // 發送訊息到指定頻道 ID
+        public async Task SendMessageToChannel(ulong channelId, string message)
+        {
+            // 取得指定頻道
+            var channel = _client.GetChannel(channelId) as ITextChannel;
+
+            // 確保頻道是文字頻道
+            if (channel != null)
+            {
+                await channel.SendMessageAsync(message); // 發送訊息
+            }
+            else
+            {
+                // 頻道無效
+                Console.WriteLine("指定的頻道 ID 無效！");
             }
         }
     }

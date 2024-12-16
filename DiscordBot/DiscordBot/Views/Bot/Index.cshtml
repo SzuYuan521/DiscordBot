@@ -20,3 +20,170 @@
         <strong>回應:</strong> @ViewBag.Message
     </div>
 }
+
+
+<h2>每日莊園高價收購</h2>
+
+<form method="post" action="/Bot/ManorAcquisitionAtHighPrice">
+    <div class="form-group">
+        <label for="text">輸入莊園高價收購:</label>
+        <textarea class="form-control" id="text" name="text" style="width:500px;height:100px;resize:none;vertical-align: top;" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">提交</button>
+    <br/>
+    <button type="button" class="btn btn-secondary" id="btnAddLine">換行</button>
+    <button type="button" class="btn btn-secondary" data-name=" ">空格</button>
+    <button type="button" class="btn btn-secondary" data-name="本日高價收購，賣完可以動動手順便幫莊園點讚">標題</button>
+    <button type="button" class="btn btn-secondary" data-name="**本日MVP**">MVP</button>
+    <br />
+    <button type="button" class="btn btn-secondary" data-name="```yaml">藍字</button>
+    <br />
+    <button type="button" class="btn btn-secondary" data-name="```">收尾</button>
+    <br />
+    <!-- 名字按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="夫君威震八方">夫君威震八方</button> <!-- 淺淺 -->
+    <button type="button" class="btn btn-secondary" data-name="夫人傾國傾城">夫人傾國傾城</button> <!-- 阿星 -->
+    <button type="button" class="btn btn-secondary" data-name="奶茶微糖少冰">奶茶微糖少冰</button> <!-- 眠眠 -->
+    <button type="button" class="btn btn-secondary" data-name="芳華如夢幾時歸">芳華如夢幾時歸</button>
+    <button type="button" class="btn btn-secondary" data-name="諸葛夜雨">諸葛夜雨</button>
+    <button type="button" class="btn btn-secondary" data-name="椒麻雞">椒麻雞</button>
+    <button type="button" class="btn btn-secondary" data-name="寒亦雪">寒亦雪</button>
+    <button type="button" class="btn btn-secondary" data-name="單夢影">單夢影</button>
+    <button type="button" class="btn btn-secondary" data-name="柒芙璃幽">柒芙璃幽</button>
+    <button type="button" class="btn btn-secondary" data-name="藥入花眠鎖夜夢">藥入花眠鎖夜夢</button>
+    <button type="button" class="btn btn-secondary" data-name="蝶雪">蝶雪</button>
+    <button type="button" class="btn btn-secondary" data-name="哈士基">哈士基</button>
+    <button type="button" class="btn btn-secondary" data-name="憩焰">憩焰</button>
+    <button type="button" class="btn btn-secondary" data-name="冰川孤辰">冰川孤辰</button>
+    <button type="button" class="btn btn-secondary" data-name="心碎鐵板燒">心碎鐵板燒</button>
+    <br />
+    <!-- 倍數按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="1.75">1.75</button>
+    <button type="button" class="btn btn-secondary" data-name="1.5">1.5</button>
+    <!-- 商品高品質按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="優質">優質</button>
+    <button type="button" class="btn btn-secondary" data-name="變異">變異</button>
+    <br />
+    <!-- 作物名稱按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="茄子">茄子</button>
+    <button type="button" class="btn btn-secondary" data-name="南瓜">南瓜</button>
+    <button type="button" class="btn btn-secondary" data-name="番茄">番茄</button>
+    <button type="button" class="btn btn-secondary" data-name="紅辣椒">紅辣椒</button>
+    <button type="button" class="btn btn-secondary" data-name="西瓜">西瓜</button>
+    <button type="button" class="btn btn-secondary" data-name="仙人掌">仙人掌</button>
+    <button type="button" class="btn btn-secondary" data-name="香蕉">香蕉</button>
+    <button type="button" class="btn btn-secondary" data-name="葡萄藤">葡萄藤</button>
+    <button type="button" class="btn btn-secondary" data-name="椰子">椰子</button>
+    <button type="button" class="btn btn-secondary" data-name="玉米">玉米</button>
+    <button type="button" class="btn btn-secondary" data-name="高粱">高粱</button>
+    <button type="button" class="btn btn-secondary" data-name="棉花">棉花</button>
+    <button type="button" class="btn btn-secondary" data-name="白蘿蔔">白蘿蔔</button>
+    <button type="button" class="btn btn-secondary" data-name="白菜">白菜</button>
+    <button type="button" class="btn btn-secondary" data-name="竹筍">竹筍</button>
+    <button type="button" class="btn btn-secondary" data-name="向日葵">向日葵</button>
+    <button type="button" class="btn btn-secondary" data-name="小麥">小麥</button>
+    <button type="button" class="btn btn-secondary" data-name="荷花">荷花</button>
+    <button type="button" class="btn btn-secondary" data-name="水芋">水芋</button>
+    <button type="button" class="btn btn-secondary" data-name="睡蓮">睡蓮</button>
+    <button type="button" class="btn btn-secondary" data-name="菱角">菱角</button>
+    <button type="button" class="btn btn-secondary" data-name="蘆葦">蘆葦</button>
+
+    <br />
+    <!-- 染料加工品名稱按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="玉米黃染料">玉米黃染料</button>
+    <button type="button" class="btn btn-secondary" data-name="高粱紅染料">高粱紅染料</button>
+    <button type="button" class="btn btn-secondary" data-name="棉花灰染料">棉花灰染料</button>
+    <button type="button" class="btn btn-secondary" data-name="茄子紫染料">茄子紫染料</button>
+    <button type="button" class="btn btn-secondary" data-name="蘿蔔白染料">蘿蔔白染料</button>
+    <button type="button" class="btn btn-secondary" data-name="白菜青染料">白菜青染料</button>
+    <button type="button" class="btn btn-secondary" data-name="南瓜橙染料">南瓜橙染料</button>
+    <button type="button" class="btn btn-secondary" data-name="番茄紅染料">番茄紅染料</button>
+    <button type="button" class="btn btn-secondary" data-name="辣椒紅染料">辣椒紅染料</button>
+    <button type="button" class="btn btn-secondary" data-name="竹筍青染料">竹筍青染料</button>
+    <button type="button" class="btn btn-secondary" data-name="西瓜粉染料">西瓜粉染料</button>
+    <button type="button" class="btn btn-secondary" data-name="仙人掌青染料">仙人掌青染料</button>
+    <button type="button" class="btn btn-secondary" data-name="香蕉黃染料">香蕉黃染料</button>
+    <button type="button" class="btn btn-secondary" data-name="向日葵橙染料">向日葵橙染料</button>
+    <button type="button" class="btn btn-secondary" data-name="葡萄紫染料">葡萄紫染料</button>
+    <button type="button" class="btn btn-secondary" data-name="椰子棕染料">椰子棕染料</button>
+    <button type="button" class="btn btn-secondary" data-name="蓮蓬綠染料">蓮蓬綠染料</button>
+    <button type="button" class="btn btn-secondary" data-name="菱角紫染料">菱角紫染料</button>
+    <button type="button" class="btn btn-secondary" data-name="蘆葦灰染料">蘆葦灰染料</button>
+    <button type="button" class="btn btn-secondary" data-name="水芋綠染料">水芋綠染料</button>
+    <button type="button" class="btn btn-secondary" data-name="睡蓮紫染料">睡蓮紫染料</button>
+    <button type="button" class="btn btn-secondary" data-name="鹽岩藍染料">鹽岩藍染料</button>
+    <button type="button" class="btn btn-secondary" data-name="鹽岩黑染料">鹽岩黑染料</button>
+    <button type="button" class="btn btn-secondary" data-name="螢光石染料">螢光石染料</button>
+    <button type="button" class="btn btn-secondary" data-name="萬能染料">萬能染料</button>
+
+    <br />
+    <!-- 食品加工品名稱按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="玉米糖">玉米糖</button>
+    <button type="button" class="btn btn-secondary" data-name="高粱飴">高粱飴</button>
+    <button type="button" class="btn btn-secondary" data-name="棉花糖">棉花糖</button>
+    <button type="button" class="btn btn-secondary" data-name="油燜茄子">油燜茄子</button>
+    <button type="button" class="btn btn-secondary" data-name="醃蘿蔔">醃蘿蔔</button>
+    <button type="button" class="btn btn-secondary" data-name="醃白菜">醃白菜</button>
+    <button type="button" class="btn btn-secondary" data-name="糖水南瓜">糖水南瓜</button>
+    <button type="button" class="btn btn-secondary" data-name="糖製番茄">糖製番茄</button>
+    <button type="button" class="btn btn-secondary" data-name="醃辣椒">醃辣椒</button>
+    <button type="button" class="btn btn-secondary" data-name="醃竹筍">醃竹筍</button>
+    <button type="button" class="btn btn-secondary" data-name="西瓜霜">西瓜霜</button>
+    <button type="button" class="btn btn-secondary" data-name="仙人掌糖凍">仙人掌糖凍</button>
+    <button type="button" class="btn btn-secondary" data-name="拔絲香蕉">拔絲香蕉</button>
+    <button type="button" class="btn btn-secondary" data-name="鹽瓜子">鹽瓜子</button>
+    <button type="button" class="btn btn-secondary" data-name="葡萄糖">葡萄糖</button>
+    <button type="button" class="btn btn-secondary" data-name="椰子糖">椰子糖</button>
+    <button type="button" class="btn btn-secondary" data-name="蓮子糖">蓮子糖</button>
+    <button type="button" class="btn btn-secondary" data-name="沾糖菱角">沾糖菱角</button>
+    <button type="button" class="btn btn-secondary" data-name="蘆根糖水">蘆根糖水</button>
+    <button type="button" class="btn btn-secondary" data-name="白糖芋頭">白糖芋頭</button>
+    <button type="button" class="btn btn-secondary" data-name="香蓮糖水">香蓮糖水</button>
+    <br/>
+    <!-- 動物製品按鈕群組 -->
+    <button type="button" class="btn btn-secondary" data-name="鴨蛋">鴨蛋</button>
+    <button type="button" class="btn btn-secondary" data-name="松果">松果</button>
+    <button type="button" class="btn btn-secondary" data-name="兔毛">兔毛</button>
+    <button type="button" class="btn btn-secondary" data-name="狐絨">狐絨</button>
+    <button type="button" class="btn btn-secondary" data-name="牛奶">牛奶</button>
+    <button type="button" class="btn btn-secondary" data-name="羊毛">羊毛</button>
+    <button type="button" class="btn btn-secondary" data-name="動物肉">動物肉</button>
+    <button type="button" class="btn btn-secondary" data-name="鹿茸">鹿茸</button>
+    <button type="button" class="btn btn-secondary" data-name="河蝦">河蝦</button>
+    <button type="button" class="btn btn-secondary" data-name="孔雀翎">孔雀翎</button>
+    <br />
+</form>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">
+        <strong>回應:</strong> @ViewBag.Message
+    </div>
+}
+<script>
+    // 設定點擊事件來新增字串
+    document.querySelectorAll("button[data-name]").forEach(button => {
+        button.onclick = function () {
+            var inputField = document.getElementById("text");
+            inputField.value += button.getAttribute("data-name"); // 將按鈕的文字新增到輸入框後面
+        };
+    });
+
+    // 獲取textarea和按鈕元素
+    const textarea = document.getElementById('text');
+    const btnAddLine = document.getElementById('btnAddLine');
+    const btnRedANSI = document.getElementById('btnRedANSI');
+
+    // 當按下 "新增換行" 按鈕時，將換行符加入textarea
+    btnAddLine.addEventListener('click', () => {
+        // 取得textarea中的當前內容
+        const currentText = textarea.value;
+
+        // 在當前內容後面新增換行符
+        textarea.value = currentText + '\n';
+
+        // 確保光標位置在文本的最後
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        textarea.focus();
+    });
+</script>
