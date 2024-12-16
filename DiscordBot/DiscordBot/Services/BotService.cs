@@ -73,5 +73,24 @@ namespace DiscordBot.Services
                 }
             }
         }
+
+
+        // 發送訊息到指定頻道 ID
+        public async Task SendMessageToChannel(ulong channelId, string message)
+        {
+            // 取得指定頻道
+            var channel = _client.GetChannel(channelId) as ITextChannel;
+
+            // 確保頻道是文字頻道
+            if (channel != null)
+            {
+                await channel.SendMessageAsync(message); // 發送訊息
+            }
+            else
+            {
+                // 頻道無效
+                Console.WriteLine("指定的頻道 ID 無效！");
+            }
+        }
     }
 }
