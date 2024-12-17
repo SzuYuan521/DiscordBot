@@ -92,5 +92,37 @@ namespace DiscordBot.Services
                 Console.WriteLine("指定的頻道 ID 無效！");
             }
         }
+
+        public async Task DeleteMessageFromChannel(ulong channelId, ulong messageId)
+        {
+            // 取得指定的頻道
+            var channel = _client.GetChannel(channelId) as ITextChannel;
+
+            if (channel != null)
+            {
+                try
+                {
+                    // 取得指定訊息並刪除
+                    var message = await channel.GetMessageAsync(messageId);
+                    if (message != null)
+                    {
+                        await message.DeleteAsync();
+                        Console.WriteLine("訊息刪除成功！");
+                    }
+                    else
+                    {
+                        Console.WriteLine("未找到指定的訊息！");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"刪除訊息時發生錯誤: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("指定的頻道 ID 無效！");
+            }
+        }
     }
 }

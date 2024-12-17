@@ -62,5 +62,33 @@ namespace DiscordBot.Controllers
 
             return View("Index");
         }
+
+        /// <summary>
+        /// 刪除訊息
+        /// </summary>
+        /// <param name="channelId">頻道ID</param>
+        /// <param name="messageId">訊息ID</param>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<IActionResult> DeleteMessage(ulong channelId, ulong messageId)
+        {
+            if (channelId == 0 || messageId == 0)
+            {
+                ViewBag.Message = "請輸入有效的頻道 ID 和訊息 ID！";
+                return View("Index");
+            }
+
+            try
+            {
+                await _botService.DeleteMessageFromChannel(channelId, messageId);
+                ViewBag.Message = "訊息已成功刪除！";
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Message = $"刪除訊息時發生錯誤: {ex.Message}";
+            }
+
+            return View("Index");
+        }
     }
 }

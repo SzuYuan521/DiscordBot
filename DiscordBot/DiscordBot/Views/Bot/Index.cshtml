@@ -159,6 +159,33 @@
         <strong>回應:</strong> @ViewBag.Message
     </div>
 }
+
+@{
+    ViewData["Title"] = "Bot 控制面板";
+}
+
+<h2>刪除指定訊息</h2>
+
+<form method="post" asp-action="DeleteMessage">
+    <div class="form-group">
+        <label for="channelId">頻道 ID：</label>
+        <input type="text" class="form-control" id="channelId" name="channelId" required />
+    </div>
+    <div class="form-group">
+        <label for="messageId">訊息 ID：</label>
+        <input type="text" class="form-control" id="messageId" name="messageId" required />
+    </div>
+    <button type="submit" class="btn btn-danger mt-2">刪除訊息</button>
+</form>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">
+        @ViewBag.Message
+    </div>
+}
+
+
 <script>
     // 設定點擊事件來新增字串
     document.querySelectorAll("button[data-name]").forEach(button => {
