@@ -13,6 +13,21 @@ namespace DiscordBot.Services
         private readonly ILogger<BotService> _logger;
         private readonly CommandService _commandService;
         private readonly DiscordSocketClient _client;
+        private readonly ulong _messageId = 1343262825086455859; // 監聽這則訊息的表情
+        private readonly Dictionary<string, ulong> _reactionRoleMap = new()  // 表情對應的身分組
+        {
+            { "🍎", 1343254054679351356 }, // 柔霧粉
+            { "🍏", 1343257439134421033 }, // 玫瑰粉
+            { "🍐", 1343259625038020761 },  // 草莓奶霜
+            { "🍊", 1343259151651962963 }, // 焦糖杏仁
+            { "🍋", 1343260172524585010 }, // 薰衣草
+            { "🍌", 1343258592572215378 }, // 碧湖藍
+            { "🍉", 1343258517280129055 }, // 海洋之星
+            { "🍇", 1343259496713027585 }, // 抹茶奶霜
+            { "🍓", 1343258841671929946 }, // 松花青
+            { "🍈", 1343256277538574438 }, // 奶油黃
+            { "🍒", 1343258062106136586 } // 白巧克力
+        };
 
         public BotService(IConfiguration configuration, ILogger<BotService> logger, CommandService commandService)
         {
@@ -26,6 +41,9 @@ namespace DiscordBot.Services
                      GatewayIntents.MessageContent
             };
             _client = new DiscordSocketClient(config);
+
+            _client.ReactionAdded += OnReactionAdded;
+            _client.ReactionRemoved += OnReactionRemoved;
         }
 
         public async Task StartAsync()
@@ -122,6 +140,60 @@ namespace DiscordBot.Services
             else
             {
                 Console.WriteLine("指定的頻道 ID 無效！");
+            }
+        }
+
+        /// <summary>
+        /// 監聽增加表情
+        /// </summary>
+        /// <param name="cache"></param>
+        /// <param name="channel"></param>
+        /// <param name="reaction"></param>
+        /// <returns></returns>
+        private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
+        {
+            if (reaction.MessageId != _messageId) return;
+
+            if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            {
+                var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
+                var user = guild?.GetUser(reaction.UserId);
+                if (user != null)
+                {
+                    var role = guild.GetRole(roleId);
+                    if (role != null)
+                    {
+                        await user.AddRoleAsync(role);
+                        Console.WriteLine($"✅ 已給 {user.Username} 添加身分組 {role.Name}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 監聽移除表情
+        /// </summary>
+        /// <param name="cache"></param>
+        /// <param name="channel"></param>
+        /// <param name="reaction"></param>
+        /// <returns></returns>
+        private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
+        {
+            if (reaction.MessageId != _messageId) return;
+
+            if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            {
+                var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
+                var user = guild?.GetUser(reaction.UserId);
+                if (user != null)
+                {
+                    var role = guild.GetRole(roleId);
+                    if (role != null)
+                    {
+                        await user.RemoveRoleAsync(role);
+                        Console.WriteLine($"❌ 已移除 {user.Username} 的身分組 {role.Name}");
+                    }
+                }
             }
         }
     }
