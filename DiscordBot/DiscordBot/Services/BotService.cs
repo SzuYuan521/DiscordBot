@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Data;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -167,6 +168,10 @@ namespace DiscordBot.Services
                         Console.WriteLine($"✅ 已給 {user.Username} 添加身分組 {role.Name}");
                     }
                 }
+            }
+            else
+            {
+                Console.WriteLine($"表情不對 : " + reaction.Emote.Name);
             }
         }
 
