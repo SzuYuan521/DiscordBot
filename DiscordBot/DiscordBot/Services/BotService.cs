@@ -39,7 +39,8 @@ namespace DiscordBot.Services
             {
                 GatewayIntents = GatewayIntents.Guilds |
                      GatewayIntents.GuildMessages |
-                     GatewayIntents.MessageContent
+                     GatewayIntents.MessageContent |
+                     GatewayIntents.GuildMessageReactions
             };
             _client = new DiscordSocketClient(config);
 
