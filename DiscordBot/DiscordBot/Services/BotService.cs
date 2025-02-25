@@ -14,18 +14,26 @@ namespace DiscordBot.Services
         private readonly ILogger<BotService> _logger;
         private readonly CommandService _commandService;
         private readonly DiscordSocketClient _client;
-        private readonly ulong _messageId = 1343262825086455859; // 監聽這則訊息的表情
+        private readonly ulong _messageId = 1343996683037577266; // 監聽這則訊息的表情
         private readonly Dictionary<string, ulong> _reactionRoleMap = new()  // 表情對應的身分組
         {
             { "🍎", 1343254054679351356 }, // 柔霧粉
             { "🍏", 1343257439134421033 }, // 玫瑰粉
             { "🍐", 1343259625038020761 },  // 草莓奶霜
             { "🍊", 1343259151651962963 }, // 焦糖杏仁
+            { "🍑", 1343260172524585010 }, // 柳橙橘
             { "🍋", 1343260172524585010 }, // 薰衣草
+            { "🥭", 1343260172524585010 }, // 芋頭紫
+            { "🍍", 1343260172524585010 }, // 紫羅蘭
             { "🍌", 1343258592572215378 }, // 碧湖藍
+            { "🥥", 1343258592572215378 }, // 霧藍
+            { "🥝", 1343258592572215378 }, // 蔚藍
             { "🍉", 1343258517280129055 }, // 海洋之星
             { "🍇", 1343259496713027585 }, // 抹茶奶霜
             { "🍓", 1343258841671929946 }, // 松花青
+            { "🍅", 1343258841671929946 }, // 經典綠
+            { "🍆", 1343258841671929946 }, // 墨綠
+            { "🥑", 1343258841671929946 }, // 鮮黃
             { "🍈", 1343256277538574438 }, // 奶油黃
             { "🍒", 1343258062106136586 } // 白巧克力
         };
@@ -37,10 +45,8 @@ namespace DiscordBot.Services
             _commandService = commandService;
             var config = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.Guilds |
-                     GatewayIntents.GuildMessages |
-                     GatewayIntents.MessageContent |
-                     GatewayIntents.GuildMessageReactions
+                GatewayIntents = GatewayIntents.All,  // 使用全部的 Intents
+                AlwaysDownloadUsers = true  // 確保用戶資料被下載
             };
             _client = new DiscordSocketClient(config);
 
@@ -109,7 +115,7 @@ namespace DiscordBot.Services
             else
             {
                 // 頻道無效
-                Console.WriteLine("指定的頻道 ID 無效！");
+                Debug.WriteLine("指定的頻道 ID 無效！");
             }
         }
 
@@ -127,21 +133,21 @@ namespace DiscordBot.Services
                     if (message != null)
                     {
                         await message.DeleteAsync();
-                        Console.WriteLine("訊息刪除成功！");
+                        Debug.WriteLine("訊息刪除成功！");
                     }
                     else
                     {
-                        Console.WriteLine("未找到指定的訊息！");
+                        Debug.WriteLine("未找到指定的訊息！");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"刪除訊息時發生錯誤: {ex.Message}");
+                    Debug.WriteLine($"刪除訊息時發生錯誤: {ex.Message}");
                 }
             }
             else
             {
-                Console.WriteLine("指定的頻道 ID 無效！");
+                Debug.WriteLine("指定的頻道 ID 無效！");
             }
         }
 
@@ -154,26 +160,53 @@ namespace DiscordBot.Services
         /// <returns></returns>
         private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            if (reaction.MessageId != _messageId) return;
-
-            if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            try
             {
-                var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
-                var user = guild?.GetUser(reaction.UserId);
-                if (user != null)
+                if (reaction.MessageId != _messageId) return;
+
+                if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
                 {
-                    var role = guild.GetRole(roleId);
-                    if (role != null)
+                    var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
+                    var user = guild?.GetUser(reaction.UserId);
+                    if (user != null)
                     {
-                        await user.AddRoleAsync(role);
-                        Console.WriteLine($"✅ 已給 {user.Username} 添加身分組 {role.Name}");
+                        var role = guild.GetRole(roleId);
+                        if (role != null)
+                        {
+                            // 檢查機器人的權限
+                            var bot = guild.CurrentUser;
+                            // 診斷資訊
+                            Debug.WriteLine("=== 診斷資訊 ===");
+                            Debug.WriteLine($"機器人名稱: {bot.Username}");
+                            Debug.WriteLine($"機器人最高身分組位階: {bot.Roles.Max(r => r.Position)}");
+                            Debug.WriteLine($"目標身分組 '{role?.Name}' 位階: {role?.Position}");
+                            Debug.WriteLine($"機器人權限: {string.Join(", ", bot.GuildPermissions.ToList())}");
+                            Debug.WriteLine($"機器人的所有身分組: {string.Join(", ", bot.Roles.Select(r => $"{r.Name}({r.Position})"))}");
+
+                            try
+                            {
+                                await user.AddRoleAsync(role);
+                                Debug.WriteLine($"✅ 已給 {user.Username} 添加身分組 {role.Name}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"添加身分組時發生錯誤: {ex.Message}");
+                                Debug.WriteLine($"錯誤詳情: {ex}");
+                            }
+                        }
                     }
                 }
+                else
+                {
+                    Debug.WriteLine($"表情不對 : " + reaction.Emote.Name);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"表情不對 : " + reaction.Emote.Name);
+                Debug.WriteLine($"處理反應時發生錯誤: {ex.Message}");
+                Debug.WriteLine($"錯誤詳情: {ex}");
             }
+
         }
 
         /// <summary>
@@ -197,7 +230,7 @@ namespace DiscordBot.Services
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
-                        Console.WriteLine($"❌ 已移除 {user.Username} 的身分組 {role.Name}");
+                        Debug.WriteLine($"❌ 已移除 {user.Username} 的身分組 {role.Name}");
                     }
                 }
             }
