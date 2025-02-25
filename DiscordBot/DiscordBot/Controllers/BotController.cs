@@ -54,8 +54,8 @@ namespace DiscordBot.Controllers
                 return View("Index");
             }
 
-            // 發送訊息到指定頻道(墨雨海棠-莊園收購與翻土區)
-            ulong channelId = 1316940662838661190;
+            // ulong channelId = 1316940662838661190;
+            ulong channelId = 0;
             await _botService.SendMessageToChannel(channelId, text);
 
             ViewBag.Message = "訊息已成功發送到頻道！";
