@@ -42,7 +42,9 @@ namespace DiscordBot.Services
             { "🥒", 1344358499207090186 }, // 純白
             { "🥦", 1344358873225625600 }, // 向日葵
             { "🥬", 1344359212633034812 }, // 金赤
-            { "🐱", 1344367811945828494 } // 塔塔色
+            { "🐱", 1344367811945828494 }, // 塔塔色
+            { "🎂", 1344373261336580306 }, // 草莓蛋糕
+            { "🧄", 1344373524944519219 } // 草莓布蕾
         };
 
         public BotService(IConfiguration configuration, ILogger<BotService> logger, CommandService commandService)
