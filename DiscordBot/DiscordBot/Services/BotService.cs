@@ -14,7 +14,7 @@ namespace DiscordBot.Services
         private readonly ILogger<BotService> _logger;
         private readonly CommandService _commandService;
         private readonly DiscordSocketClient _client;
-        private readonly ulong _messageId = 1343996683037577266; // 監聽這則訊息的表情
+        private readonly HashSet<ulong> _messageIds = new() { 1343996683037577266, 1344363767651237959 };  // 監聽這則訊息的表情
         private readonly Dictionary<string, ulong> _reactionRoleMap = new()  // 表情對應的身分組
         {
             { "🍎", 1343254054679351356 }, // 柔霧粉
@@ -168,7 +168,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                if (reaction.MessageId != _messageId) return;
+                if (!_messageIds.Contains(reaction.MessageId)) return;
 
                 if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
                 {
@@ -179,6 +179,7 @@ namespace DiscordBot.Services
                         var role = guild.GetRole(roleId);
                         if (role != null)
                         {
+                            /*
                             // 檢查機器人的權限
                             var bot = guild.CurrentUser;
                             // 診斷資訊
@@ -188,6 +189,7 @@ namespace DiscordBot.Services
                             Debug.WriteLine($"目標身分組 '{role?.Name}' 位階: {role?.Position}");
                             Debug.WriteLine($"機器人權限: {string.Join(", ", bot.GuildPermissions.ToList())}");
                             Debug.WriteLine($"機器人的所有身分組: {string.Join(", ", bot.Roles.Select(r => $"{r.Name}({r.Position})"))}");
+                            */
 
                             try
                             {
@@ -224,7 +226,7 @@ namespace DiscordBot.Services
         /// <returns></returns>
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            if (reaction.MessageId != _messageId) return;
+            if (!_messageIds.Contains(reaction.MessageId)) return;
 
             if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
             {
