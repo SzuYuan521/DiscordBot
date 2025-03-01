@@ -70,7 +70,7 @@ public class QuartzHostedService : IHostedService
 
                     // 註冊排程
                     await _scheduler.ScheduleJob(jobDetail, trigger, cancellationToken);
-                    Debug.WriteLine($"[Quartz] 已註冊 Job: {jobSchedule.JobType} (ID: {jobSchedule.Id})");
+                    Debug.WriteLine($"[Quartz] 已註冊 Job: {jobSchedule.JobType} (ID: {jobSchedule.Id}, Time: {jobSchedule.CronExpression})");
                 }
                 else
                 {
