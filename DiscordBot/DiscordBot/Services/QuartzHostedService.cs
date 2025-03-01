@@ -70,11 +70,11 @@ public class QuartzHostedService : IHostedService
 
                     // 註冊排程
                     await _scheduler.ScheduleJob(jobDetail, trigger, cancellationToken);
-                    Debug.WriteLine($"[Quartz] 已註冊 Job: {jobSchedule.JobType} (ID: {jobSchedule.Id}, Time: {jobSchedule.CronExpression})");
+                    Console.WriteLine($"[Quartz] 已註冊 Job: {jobSchedule.JobType} (ID: {jobSchedule.Id})");
                 }
                 else
                 {
-                    Debug.WriteLine($"[Quartz] Job 已存在: {jobSchedule.JobType} (ID: {jobSchedule.Id}), 跳過");
+                    Console.WriteLine($"[Quartz] Job 已存在: {jobSchedule.JobType} (ID: {jobSchedule.Id}), 跳過");
                 }
             }
         }
@@ -92,7 +92,7 @@ public class QuartzHostedService : IHostedService
         if (_scheduler != null)
         {
             await _scheduler.Shutdown(cancellationToken);
-            Debug.WriteLine("[Quartz] 任務排程已停止");
+            Console.WriteLine("[Quartz] 任務排程已停止");
         }
     }
 }
