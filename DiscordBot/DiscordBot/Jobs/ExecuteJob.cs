@@ -28,7 +28,7 @@ namespace DiscordBot.Jobs
             var dataMap = context.MergedJobDataMap;
             int jobId = dataMap.GetInt("JobId");
 
-            Debug.WriteLine($"[Quartz] 正在執行 Job Id: {jobId}");
+            Console.WriteLine($"[Quartz] 正在執行 Job Id: {jobId}");
 
             // 建立 Scoped, 確保不影響 Singleton
             using (var scope = _serviceProvider.CreateScope())
@@ -41,7 +41,7 @@ namespace DiscordBot.Jobs
                 var jobSchedule = await jobScheduleService.GetJobScheduleByIdAsync(jobId);
                 if (jobSchedule == null || !jobSchedule.Enabled)
                 {
-                    Debug.WriteLine($"[Quartz] ⚠️ Job {jobId} 未啟用或不存在, 跳過執行");
+                    Console.WriteLine($"[Quartz] ⚠️ Job {jobId} 未啟用或不存在, 跳過執行");
                     return;
                 }
 
@@ -61,7 +61,7 @@ namespace DiscordBot.Jobs
                         break;
 
                     default:
-                        Debug.WriteLine($"[Error] 未知的 JobType: {jobSchedule.JobType}");
+                        Console.WriteLine($"[Error] 未知的 JobType: {jobSchedule.JobType}");
                         break;
                 }
             } // Scoped 服務 (DbContext) 會在此處正確釋放
@@ -92,7 +92,7 @@ namespace DiscordBot.Jobs
         /// <param name="job">Job 排程資訊</param>
         private async Task RunCommand(JobSchedule job)
         {
-            Debug.WriteLine($"[執行指令] {job.Command}");
+            Console.WriteLine($"[執行指令] {job.Command}");
             // 之後再實作指令執行
         }
 
@@ -102,7 +102,7 @@ namespace DiscordBot.Jobs
         /// <param name="job">Job 排程資訊</param>
         private async Task ClearData(JobSchedule job)
         {
-            Debug.WriteLine($"[刪除資料] {job.Id}");
+            Console.WriteLine($"[刪除資料] {job.Id}");
             // 之後再實作刪除資料
         }
     }
