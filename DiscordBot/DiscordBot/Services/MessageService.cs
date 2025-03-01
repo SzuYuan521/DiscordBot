@@ -24,7 +24,7 @@ namespace DiscordBot.Services
         /// <returns>回傳 DiscordMessage 物件, 若不存在則回傳 null</returns>
         public async Task<DiscordMessage?> GetMessageByIdAsync(int id)
         {
-            return await _dbContext.Messages.FindAsync(id);
+            return await _dbContext.DiscordMessages.FindAsync(id);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace DiscordBot.Services
         /// <param name="message">要新增的 Discord 訊息物件</param>
         public async Task AddMessageAsync(DiscordMessage message)
         {
-            await _dbContext.Messages.AddAsync(message);
+            await _dbContext.DiscordMessages.AddAsync(message);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -43,10 +43,10 @@ namespace DiscordBot.Services
         /// <param name="id">訊息的唯一識別碼</param>
         public async Task DeleteMessageAsync(int id)
         {
-            var message = await _dbContext.Messages.FindAsync(id);
+            var message = await _dbContext.DiscordMessages.FindAsync(id);
             if (message != null)
             {
-                _dbContext.Messages.Remove(message);
+                _dbContext.DiscordMessages.Remove(message);
                 await _dbContext.SaveChangesAsync();
             }
         }

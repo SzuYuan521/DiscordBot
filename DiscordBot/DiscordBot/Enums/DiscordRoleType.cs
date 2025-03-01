@@ -1,0 +1,8 @@
+﻿namespace DiscordBot.Enums
+{
+    public enum DiscordRoleType
+    {
+        Color, // 顏色身份組
+        Combat // 戰鬥
+    }
+}

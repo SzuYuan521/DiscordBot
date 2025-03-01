@@ -3,6 +3,7 @@ using System;
 using DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250301140715_DiscordRoleChannelCreate")]
+    partial class DiscordRoleChannelCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,9 +77,6 @@ namespace DiscordBot.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<int>("DiscordRoleType")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -126,87 +126,6 @@ namespace DiscordBot.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("JobSchedules");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.MonitoredMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("ChannelId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<decimal>("MessageId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MessageId")
-                        .IsUnique();
-
-                    b.ToTable("MonitoredMessages");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.RoleMagicPact", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("DiscordChannelId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<decimal>("DiscordRoleId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<string>("Emoji")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("MonitoredMessageId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DiscordChannelId");
-
-                    b.HasIndex("DiscordRoleId");
-
-                    b.HasIndex("MonitoredMessageId");
-
-                    b.ToTable("RoleMagicPacts");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.RoleMagicPact", b =>
-                {
-                    b.HasOne("DiscordBot.Models.DiscordChannel", "DiscordChannel")
-                        .WithMany()
-                        .HasForeignKey("DiscordChannelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DiscordBot.Models.DiscordRole", "DiscordRole")
-                        .WithMany()
-                        .HasForeignKey("DiscordRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DiscordBot.Models.MonitoredMessage", "MonitoredMessage")
-                        .WithMany()
-                        .HasForeignKey("MonitoredMessageId")
-                        .HasPrincipalKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DiscordChannel");
-
-                    b.Navigation("DiscordRole");
-
-                    b.Navigation("MonitoredMessage");
                 });
 #pragma warning restore 612, 618
         }
