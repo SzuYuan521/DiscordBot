@@ -1,86 +1,97 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Data;
-using System.Diagnostics;
-using System.Threading.Tasks;
+using DiscordBot.Data;
+using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace DiscordBot.Services
 {
+    /// <summary>
+    /// Discord 機器人服務, 負責監聽訊息, 表情回應, 管理身分組
+    /// </summary>
     public class BotService
     {
-        private readonly IConfiguration _configuration;
         private readonly ILogger<BotService> _logger;
         private readonly CommandService _commandService;
-        private readonly DiscordSocketClient _client;
-        private readonly HashSet<ulong> _messageIds = new() { 1343996683037577266, 1344363767651237959 };  // 監聽這則訊息的表情
-        private readonly Dictionary<string, ulong> _reactionRoleMap = new()  // 表情對應的身分組
-        {
-            { "🍎", 1343254054679351356 }, // 柔霧粉
-            { "🍏", 1343257439134421033 }, // 玫瑰粉
-            { "🌽", 1344000928537251851 }, // 女團粉
-            { "🍐", 1343259625038020761 },  // 草莓奶霜
-            { "🍊", 1343259151651962963 }, // 焦糖杏仁
-            { "🍑", 1343948660731281439 }, // 柳橙橘
-            { "🍋", 1343260172524585010 }, // 薰衣草
-            { "🥭", 1343949670896111627 }, // 芋頭紫
-            { "🍍", 1343949154367307868 }, // 紫羅蘭
-            { "🍌", 1343258592572215378 }, // 碧湖藍
-            { "🥥", 1343949664117985290 }, // 霧藍
-            { "🥝", 1343950161407115264 }, // 蔚藍
-            { "🍉", 1343258517280129055 }, // 海洋之星
-            { "🍇", 1343259496713027585 }, // 抹茶奶霜
-            { "🍓", 1343258841671929946 }, // 松花青
-            { "🍅", 1343952020083576842 }, // 經典綠
-            { "🍆", 1343952874278879232 }, // 墨綠
-            { "🥑", 1343953205897465977 }, // 鮮黃
-            { "🍈", 1343256277538574438 }, // 奶油黃
-            { "🍒", 1343258062106136586 }, // 白巧克力
-            { "🌶️", 1344351623060914216 }, // 藍莓牛奶
-            { "🥕", 1344358121572667433 }, // 灰茶
-            { "🥒", 1344358499207090186 }, // 純白
-            { "🥦", 1344358873225625600 }, // 向日葵
-            { "🥬", 1344359212633034812 }, // 金赤
-            { "🐱", 1344367811945828494 }, // 塔塔色
-            { "🎂", 1344373261336580306 }, // 草莓蛋糕
-            { "🧄", 1344373524944519219 } // 草莓布蕾
-        };
+        private readonly DiscordSocketClient _client; // Discord 機器人 client 端
+        private readonly IServiceScopeFactory _scopeFactory; // 產生新的 DbContext 範圍
 
-        public BotService(IConfiguration configuration, ILogger<BotService> logger, CommandService commandService)
+        private HashSet<ulong> _messageIds = new();  // 需要監聽的訊息 ID
+        private Dictionary<string, ulong> _reactionRoleMap = new(); // 表情對應的身分組
+
+        public BotService(ILogger<BotService> logger, CommandService commandService, IServiceScopeFactory scopeFactory)
         {
-            _configuration = configuration;
+            _scopeFactory = scopeFactory;
             _logger = logger;
             _commandService = commandService;
+
             var config = new DiscordSocketConfig
             {
                 GatewayIntents = GatewayIntents.All,  // 使用全部的 Intents
-                AlwaysDownloadUsers = true  // 確保用戶資料被下載
+                AlwaysDownloadUsers = true  // 確保機器人可以獲取所有伺服器用戶資料
             };
             _client = new DiscordSocketClient(config);
 
+            // 設定監聽表情回應的事件
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
         }
 
+        /// <summary>
+        /// 啟動機器人並連接到 Discord 伺服器
+        /// </summary>
         public async Task StartAsync()
         {
             _client.Log += LogAsync;
             _client.MessageReceived += MessageReceivedAsync;
 
-            string discordBotToken = Environment.GetEnvironmentVariable("DISCORDBOT_TOKEN");
+            // 從資料庫載入表情符號對應的身分組
+            await LoadReactionRolesFromDatabase();
 
-            Console.WriteLine("discordToken = " + discordBotToken);
+            // 取得 (Render) 環境變數中的 Discord Token
+            string discordBotToken = Environment.GetEnvironmentVariable("DISCORDBOT_TOKEN");
 
             if (string.IsNullOrEmpty(discordBotToken))
             {
                 throw new Exception("Discord token is missing!");
             }
+
+            // 登入並啟動機器人
             await _client.LoginAsync(TokenType.Bot, discordBotToken);
             await _client.StartAsync();
 
-            // 防止方法立即結束
+            // 防止方法立即結束, 讓機器人保持運行
             await Task.Delay(-1);
+        }
+
+        /// <summary>
+        /// 從資料庫載入 Discord Role 資訊
+        /// </summary>
+        private async Task LoadReactionRolesFromDatabase()
+        {
+            using (var scope = _scopeFactory.CreateScope()) // 創建新的 Scoped
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); // 取得 ApplicationDbContext
+                var roleMappings = await dbContext.RoleMagicPacts
+                    .Include(r => r.DiscordRole) // 對應的 Discord 身分組
+                    .Include(r => r.MonitoredMessage) // 監聽的訊息
+                    .Include(r => r.DiscordChannel)// 頻道資訊
+                    .ToListAsync();
+
+                _reactionRoleMap.Clear();
+                _messageIds.Clear();
+
+                foreach (var mapping in roleMappings)
+                {
+                    if (mapping.Emoji != null)
+                    {
+                        _reactionRoleMap[mapping.Emoji] = mapping.DiscordRoleId; // 儲存表情與身分組的對應關係
+                    }
+                    _messageIds.Add(mapping.MonitoredMessageId); // 記錄監聽的訊息 ID
+                }
+
+                _logger.LogInformation("已成功從資料庫加載 Reaction Role 設定");
+            }
         }
 
         private Task LogAsync(LogMessage log)
@@ -89,11 +100,17 @@ namespace DiscordBot.Services
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 取得 Discord Client 端實例
+        /// </summary>
         public DiscordSocketClient GetClient()
         {
             return _client;
         }
 
+        /// <summary>
+        /// 監聽訊息, 處理指令
+        /// </summary>
         private async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Author.IsBot)
@@ -115,7 +132,12 @@ namespace DiscordBot.Services
         }
 
 
-        // 發送訊息到指定頻道 ID
+        /// <summary>
+        /// 發送訊息到指定頻道 ID
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public async Task SendMessageToChannel(ulong channelId, string message)
         {
             // 取得指定頻道
@@ -166,7 +188,7 @@ namespace DiscordBot.Services
         }
 
         /// <summary>
-        /// 監聽增加表情
+        /// 監聽增加表情回應, 添加對應的身分組
         /// </summary>
         /// <param name="cache"></param>
         /// <param name="channel"></param>
@@ -187,22 +209,10 @@ namespace DiscordBot.Services
                         var role = guild.GetRole(roleId);
                         if (role != null)
                         {
-                            /*
-                            // 檢查機器人的權限
-                            var bot = guild.CurrentUser;
-                            // 診斷資訊
-                            Console.WriteLine("=== 診斷資訊 ===");
-                            Console.WriteLine($"機器人名稱: {bot.Username}");
-                            Console.WriteLine($"機器人最高身分組位階: {bot.Roles.Max(r => r.Position)}");
-                            Console.WriteLine($"目標身分組 '{role?.Name}' 位階: {role?.Position}");
-                            Console.WriteLine($"機器人權限: {string.Join(", ", bot.GuildPermissions.ToList())}");
-                            Console.WriteLine($"機器人的所有身分組: {string.Join(", ", bot.Roles.Select(r => $"{r.Name}({r.Position})"))}");
-                            */
-
                             try
                             {
                                 await user.AddRoleAsync(role);
-                                Console.WriteLine($"✅ 已給 {user.Username} 添加身分組 {role.Name}");
+                                Console.WriteLine($"已給 {user.Username} 添加身分組 {role.Name}");
                             }
                             catch (Exception ex)
                             {
@@ -214,7 +224,7 @@ namespace DiscordBot.Services
                 }
                 else
                 {
-                    Console.WriteLine($"表情不對 : " + reaction.Emote.Name);
+                    Console.WriteLine($"表情不對: " + reaction.Emote.Name);
                 }
             }
             catch (Exception ex)
@@ -226,7 +236,7 @@ namespace DiscordBot.Services
         }
 
         /// <summary>
-        /// 監聽移除表情
+        /// 監聽移除表情回應, 移除身分組
         /// </summary>
         /// <param name="cache"></param>
         /// <param name="channel"></param>
@@ -246,7 +256,7 @@ namespace DiscordBot.Services
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
-                        Console.WriteLine($"❌ 已移除 {user.Username} 的身分組 {role.Name}");
+                        Console.WriteLine($"已移除 {user.Username} 的身分組 {role.Name}");
                     }
                 }
             }
