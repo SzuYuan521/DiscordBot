@@ -1,5 +1,6 @@
 ﻿using OfficeOpenXml;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 
 namespace DiscordBot.Services
@@ -27,7 +28,7 @@ namespace DiscordBot.Services
         {
             if (!File.Exists(_filePath))
             {
-                Console.WriteLine("找不到Commands.xlsx");
+                Debug.WriteLine("找不到Commands.xlsx");
                 return "指令功能錯誤，請聯繫開發人員。";
             }
 
@@ -60,7 +61,7 @@ namespace DiscordBot.Services
                     }
                     else
                     {
-                        Console.WriteLine("找不到Commands.xlsx");
+                        Debug.WriteLine("找不到Commands.xlsx");
                         response = "找不到指令";
                     }
                 }

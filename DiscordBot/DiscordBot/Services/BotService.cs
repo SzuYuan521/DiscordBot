@@ -89,6 +89,11 @@ namespace DiscordBot.Services
             return Task.CompletedTask;
         }
 
+        public DiscordSocketClient GetClient()
+        {
+            return _client;
+        }
+
         private async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Author.IsBot)
