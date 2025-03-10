@@ -43,7 +43,7 @@ namespace DiscordBot.Services
             // 監聽用戶加入事件
             _client.UserJoined += OnUserJoined;
 
-            _client.Ready += OnBotReady; // 用來補建成員資料
+      //      _client.Ready += OnBotReady; // 用來補建成員資料
         }
 
         /// <summary>
@@ -366,6 +366,7 @@ namespace DiscordBot.Services
             }
         }
 
+        /*
         /// <summary>
         /// 用來補建成員資料
         /// </summary>
@@ -391,7 +392,7 @@ namespace DiscordBot.Services
 
                 foreach (var member in members)
                 {
-                    string nickname = string.IsNullOrEmpty(member.Nickname) ? member.Username : member.Nickname;
+                    string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username : member.DisplayName;
                     string roles = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
                         ? string.Join(", ", member.Roles
                             .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
@@ -422,7 +423,7 @@ namespace DiscordBot.Services
                 await dbContext.SaveChangesAsync();
                 Console.WriteLine(sb.ToString()); // 在控制台輸出
             }
-        }
+        }*/
 
     }
 }
