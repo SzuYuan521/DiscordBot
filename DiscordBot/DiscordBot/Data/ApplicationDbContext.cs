@@ -17,8 +17,9 @@ namespace DiscordBot.Data
 
         public DbSet<GuildMember> GuildMembers { get; set; } // 幫會會員
         public DbSet<OneLineBond> OneLineBonds { get; set; } // 一線牽
-
         public DbSet<MemberStatistics> MemberStatistics { get; set; } // 統計
+        public DbSet<StatisticsConfig> StatisticsConfigs { get; set; } // 存放 Emoji 與統計類型對應關係
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -102,6 +103,10 @@ namespace DiscordBot.Data
                       .HasForeignKey<MemberStatistics>(m => m.DiscordId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<StatisticsConfig>()
+                .HasIndex(s => s.Emoji)
+                .IsUnique(); // 確保 Emoji 唯一
         }
     }
 }

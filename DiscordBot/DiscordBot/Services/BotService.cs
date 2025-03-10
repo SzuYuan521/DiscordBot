@@ -247,13 +247,18 @@ namespace DiscordBot.Services
                 if (!_monitoredMessages.TryGetValue(reaction.MessageId, out var monitoredMessage))
                     return;
 
+                // 嚴格比對 監聽的頻道 ID 是否與當前頻道相符
+                if (monitoredMessage.ChannelId != reaction.Channel.Id)
+                    return;
+
                 switch (monitoredMessage.MessageType)
                 {
                     case Enums.MessageType.ReactionRole:
-                        await HandleReactionRoleAdded(reaction);
+                        await HandleReactionRoleAdded(reaction, monitoredMessage);
                         break;
 
                     case Enums.MessageType.Statistics:
+                        await HandleStatisticsReactionAdded(reaction, monitoredMessage);
                         break;
 
                     default:
@@ -282,13 +287,18 @@ namespace DiscordBot.Services
                 if (!_monitoredMessages.TryGetValue(reaction.MessageId, out var monitoredMessage))
                     return;
 
+                // 嚴格比對 監聽的頻道 ID 是否與當前頻道相符
+                if (monitoredMessage.ChannelId != reaction.Channel.Id)
+                    return;
+
                 switch (monitoredMessage.MessageType)
                 {
                     case Enums.MessageType.ReactionRole:
-                        await HandleReactionRoleRemoved(reaction);
+                        await HandleReactionRoleRemoved(reaction, monitoredMessage);
                         break;
 
                     case Enums.MessageType.Statistics:
+                        await HandleStatisticsReactionRemoved(reaction, monitoredMessage);
                         break;
 
                     default:
@@ -305,13 +315,17 @@ namespace DiscordBot.Services
         /// <summary>
         /// 當用戶在監聽訊息上增加表情時, 根據 ReactionRole 設定分配身分組
         /// </summary>
-        private async Task HandleReactionRoleAdded(SocketReaction reaction)
+        private async Task HandleReactionRoleAdded(SocketReaction reaction, MonitoredMessage monitoredMessage)
         {
             if (!_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
             {
                 Console.WriteLine($"表情 {reaction.Emote.Name} 沒有對應的身份組");
                 return;
             }
+
+            // 檢查 reaction 的訊息 ID 和頻道 ID 是否與 MonitoredMessage 相符
+            if (monitoredMessage.MessageId != reaction.MessageId || monitoredMessage.ChannelId != reaction.Channel.Id)
+                return;
 
             var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
             var user = guild?.GetUser(reaction.UserId);
@@ -338,13 +352,17 @@ namespace DiscordBot.Services
         /// <summary>
         /// 當用戶在監聽訊息上移除表情時, 根據 ReactionRole 設定移除身分組
         /// </summary>
-        private async Task HandleReactionRoleRemoved(SocketReaction reaction)
+        private async Task HandleReactionRoleRemoved(SocketReaction reaction, MonitoredMessage monitoredMessage)
         {
             if (!_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
             {
                 Console.WriteLine($"表情 {reaction.Emote.Name} 沒有對應的身份組");
                 return;
             }
+
+            // 檢查 reaction 的訊息 ID 和頻道 ID 是否與 MonitoredMessage 相符
+            if (monitoredMessage.MessageId != reaction.MessageId || monitoredMessage.ChannelId != reaction.Channel.Id)
+                return;
 
             var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
             var user = guild?.GetUser(reaction.UserId);
@@ -365,6 +383,76 @@ namespace DiscordBot.Services
                 }
             }
         }
+
+        /// <summary>
+        /// 根據 Emoji 更新統計數據 (增加)
+        /// </summary>
+        /// <param name="reaction"></param>
+        /// <returns></returns>
+        private async Task HandleStatisticsReactionAdded(SocketReaction reaction, MonitoredMessage monitoredMessage)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // 從資料庫讀取 Emoji 與統計類型的對應關係
+            var config = await dbContext.StatisticsConfigs.FirstOrDefaultAsync(s => s.Emoji == reaction.Emote.Name);
+            if (config == null) return; // 沒有對應的統計類型, 直接返回
+
+            // 確保此表情僅影響對應的 MonitoredMessage
+            if (monitoredMessage.MessageId != reaction.MessageId || monitoredMessage.ChannelId != reaction.Channel.Id)
+                return;
+
+            var memberStats = await dbContext.MemberStatistics.FindAsync(reaction.UserId);
+            if (memberStats == null)
+            {
+                memberStats = new MemberStatistics { DiscordId = reaction.UserId };
+                dbContext.MemberStatistics.Add(memberStats);
+            }
+
+            switch (config.StatisticsType)
+            {
+                case StatisticsType.TaishanMove: // 泰山移
+                    memberStats.TaishanMove = true;
+                    break;
+            }
+
+            await dbContext.SaveChangesAsync();
+            Console.WriteLine($"✅ 更新統計數據: {reaction.UserId} => {config.StatisticsType}");
+        }
+
+        /// <summary>
+        /// 根據 Emoji 更新統計數據 (減少)
+        /// </summary>
+        /// <param name="reaction"></param>
+        /// <returns></returns>
+        private async Task HandleStatisticsReactionRemoved(SocketReaction reaction, MonitoredMessage monitoredMessage)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // 從資料庫讀取 Emoji 與統計類型的對應關係
+            var config = await dbContext.StatisticsConfigs.FirstOrDefaultAsync(s => s.Emoji == reaction.Emote.Name);
+            if (config == null) return; // 沒有對應的統計類型, 直接返回
+
+            // 確保此表情僅影響對應的 MonitoredMessage
+            if (monitoredMessage.MessageId != reaction.MessageId || monitoredMessage.ChannelId != reaction.Channel.Id)
+                return;
+
+            var memberStats = await dbContext.MemberStatistics.FindAsync(reaction.UserId);
+            if (memberStats == null) return;
+
+            switch (config.StatisticsType)
+            {
+                case StatisticsType.TaishanMove:
+                    memberStats.TaishanMove = false;
+                    break;
+            }
+
+            await dbContext.SaveChangesAsync();
+            Console.WriteLine($"❌ 更新統計數據: {reaction.UserId} => {config.StatisticsType} (已移除)");
+        }
+
+
 
         /*
         /// <summary>
