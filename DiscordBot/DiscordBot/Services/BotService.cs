@@ -1,8 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordBot.Data;
+using DiscordBot.Models;
+using DiscordBot.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Text;
 
 namespace DiscordBot.Services
 {
@@ -16,7 +19,8 @@ namespace DiscordBot.Services
         private readonly DiscordSocketClient _client; // Discord 機器人 client 端
         private readonly IServiceScopeFactory _scopeFactory; // 產生新的 DbContext 範圍
 
-        private HashSet<ulong> _messageIds = new();  // 需要監聽的訊息 ID
+        // 記錄監聽的訊息 ID 與對應的 MonitoredMessage 物件
+        private Dictionary<ulong, MonitoredMessage> _monitoredMessages = new();
         private Dictionary<string, ulong> _reactionRoleMap = new(); // 表情對應的身分組
 
         public BotService(ILogger<BotService> logger, CommandService commandService, IServiceScopeFactory scopeFactory)
@@ -35,6 +39,11 @@ namespace DiscordBot.Services
             // 設定監聽表情回應的事件
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
+
+            // 監聽用戶加入事件
+            _client.UserJoined += OnUserJoined;
+
+            _client.Ready += OnBotReady; // 用來補建成員資料
         }
 
         /// <summary>
@@ -78,8 +87,10 @@ namespace DiscordBot.Services
                     .Include(r => r.DiscordChannel)// 頻道資訊
                     .ToListAsync();
 
+                var monitoredMessages = await dbContext.MonitoredMessages.ToListAsync();
+
                 _reactionRoleMap.Clear();
-                _messageIds.Clear();
+                _monitoredMessages.Clear();
 
                 foreach (var mapping in roleMappings)
                 {
@@ -87,10 +98,14 @@ namespace DiscordBot.Services
                     {
                         _reactionRoleMap[mapping.Emoji] = mapping.DiscordRoleId; // 儲存表情與身分組的對應關係
                     }
-                    _messageIds.Add(mapping.MonitoredMessageId); // 記錄監聽的訊息 ID
                 }
 
-                _logger.LogInformation("已成功從資料庫加載 Reaction Role 設定");
+                foreach (var msg in monitoredMessages)
+                {
+                    _monitoredMessages[msg.MessageId] = msg;
+                }
+
+                _logger.LogInformation("已成功從資料庫加載 Reaction Role 設定和監聽訊息");
             }
         }
 
@@ -107,6 +122,37 @@ namespace DiscordBot.Services
         {
             return _client;
         }
+
+        /// <summary>
+        /// 當新成員加入時, 記錄到資料庫
+        /// </summary>
+        private async Task OnUserJoined(SocketGuildUser user)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var guildMemberService = scope.ServiceProvider.GetRequiredService<GuildMemberService>();
+
+                var existingMember = await guildMemberService.GetMemberByDiscordIdAsync(user.Id);
+                if (existingMember == null)
+                {
+                    var newMember = new GuildMember
+                    {
+                        DiscordId = user.Id,
+                        DiscordName = user.Username,
+                        CharacterClass = CharacterClassType.None,
+                        JoinDate = DateTime.UtcNow
+                    };
+
+                    await guildMemberService.AddMemberAsync(newMember);
+                    Console.WriteLine($"新成員 {user.Username} 已加入，並記錄至資料庫");
+                }
+                else
+                {
+                    Console.WriteLine($"成員 {user.Username} 已經在資料庫中");
+                }
+            }
+        }
+
 
         /// <summary>
         /// 監聽訊息, 處理指令
@@ -198,33 +244,20 @@ namespace DiscordBot.Services
         {
             try
             {
-                if (!_messageIds.Contains(reaction.MessageId)) return;
+                if (!_monitoredMessages.TryGetValue(reaction.MessageId, out var monitoredMessage))
+                    return;
 
-                if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+                switch (monitoredMessage.MessageType)
                 {
-                    var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
-                    var user = guild?.GetUser(reaction.UserId);
-                    if (user != null)
-                    {
-                        var role = guild.GetRole(roleId);
-                        if (role != null)
-                        {
-                            try
-                            {
-                                await user.AddRoleAsync(role);
-                                Console.WriteLine($"已給 {user.Username} 添加身分組 {role.Name}");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"添加身分組時發生錯誤: {ex.Message}");
-                                Console.WriteLine($"錯誤詳情: {ex}");
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"表情不對: " + reaction.Emote.Name);
+                    case Enums.MessageType.ReactionRole:
+                        await HandleReactionRoleAdded(reaction);
+                        break;
+
+                    case Enums.MessageType.Statistics:
+                        break;
+
+                    default:
+                        break;
                 }
             }
             catch (Exception ex)
@@ -244,22 +277,147 @@ namespace DiscordBot.Services
         /// <returns></returns>
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            if (!_messageIds.Contains(reaction.MessageId)) return;
-
-            if (_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            try
             {
-                var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
-                var user = guild?.GetUser(reaction.UserId);
-                if (user != null)
+                if (!_monitoredMessages.TryGetValue(reaction.MessageId, out var monitoredMessage))
+                    return;
+
+                switch (monitoredMessage.MessageType)
                 {
-                    var role = guild.GetRole(roleId);
-                    if (role != null)
+                    case Enums.MessageType.ReactionRole:
+                        await HandleReactionRoleRemoved(reaction);
+                        break;
+
+                    case Enums.MessageType.Statistics:
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"處理反應時發生錯誤: {ex.Message}");
+            }
+        }
+ 
+
+        /// <summary>
+        /// 當用戶在監聽訊息上增加表情時, 根據 ReactionRole 設定分配身分組
+        /// </summary>
+        private async Task HandleReactionRoleAdded(SocketReaction reaction)
+        {
+            if (!_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            {
+                Console.WriteLine($"表情 {reaction.Emote.Name} 沒有對應的身份組");
+                return;
+            }
+
+            var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
+            var user = guild?.GetUser(reaction.UserId);
+            if (user != null)
+            {
+                var role = guild.GetRole(roleId);
+                if (role != null)
+                {
+                    try
                     {
-                        await user.RemoveRoleAsync(role);
-                        Console.WriteLine($"已移除 {user.Username} 的身分組 {role.Name}");
+                        await user.AddRoleAsync(role);
+                        Console.WriteLine($"已給 {user.Username} 添加身分組 {role.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"添加身分組時發生錯誤: {ex.Message}");
+                        Console.WriteLine($"錯誤詳情: {ex}");
                     }
                 }
             }
         }
+
+
+        /// <summary>
+        /// 當用戶在監聽訊息上移除表情時, 根據 ReactionRole 設定移除身分組
+        /// </summary>
+        private async Task HandleReactionRoleRemoved(SocketReaction reaction)
+        {
+            if (!_reactionRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleId))
+            {
+                Console.WriteLine($"表情 {reaction.Emote.Name} 沒有對應的身份組");
+                return;
+            }
+
+            var guild = (reaction.Channel as SocketGuildChannel)?.Guild;
+            var user = guild?.GetUser(reaction.UserId);
+            if (user != null)
+            {
+                var role = guild.GetRole(roleId);
+                if (role != null)
+                {
+                    try
+                    {
+                        await user.RemoveRoleAsync(role);
+                        Console.WriteLine($"已移除 {user.Username} 的身分組 {role.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"移除身分組時發生錯誤: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 用來補建成員資料
+        /// </summary>
+        private async Task OnBotReady()
+        {
+            var guild = _client.GetGuild(1335798324275449929);
+            if (guild == null)
+            {
+                Console.WriteLine("❌ 找不到指定的伺服器！");
+                return;
+            }
+
+            Console.WriteLine($"✅ 讀取伺服器：{guild.Name}");
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                // 獲取所有成員
+                var members = guild.Users;
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine($"📋 **伺服器 {guild.Name} 成員列表** (總共 {members.Count} 人):\n");
+
+                foreach (var member in members)
+                {
+                    string roles = member.Roles.Count > 1
+                        ? string.Join(", ", member.Roles.Where(r => r.Id != 1335798324275449929).Select(r => r.Name))
+                        : "無身分組";
+
+                    sb.AppendLine($"🆔 {member.Id} | **{member.Username}#{member.Discriminator}** | {roles}");
+
+                    // 檢查資料庫是否已經有該成員
+                    var existingMember = await dbContext.GuildMembers.FindAsync(member.Id);
+                    if (existingMember == null)
+                    {
+                        dbContext.GuildMembers.Add(new GuildMember
+                        {
+                            DiscordId = member.Id,
+                            DiscordName = $"{member.Username}#{member.Discriminator}",
+                            CharacterClass = CharacterClassType.None,
+                            JoinDate = DateTime.UtcNow
+                        });
+
+                        Console.WriteLine($"✅ 新增成員 {member.Username}#{member.Discriminator} 至 GuildMembers");
+                    }
+                }
+
+                // 儲存變更
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine(sb.ToString()); // 在控制台輸出
+            }
+        }
+
     }
 }

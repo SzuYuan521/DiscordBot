@@ -30,6 +30,9 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);  // 設定
 builder.Services.AddSingleton<CommandService>(); // 註冊 Discord 機器人指令服務
 builder.Services.AddSingleton<BotService>(); // 註冊 Discord Bot 服務
 builder.Services.AddControllersWithViews(); // 註冊 MVC Controller 和 View
+builder.Services.AddScoped<GuildMemberService>(); // 幫會成員
+builder.Services.AddScoped<OneLineBondService>(); // 一線牽
+
 
 // 註冊與資料庫相關的服務, 使用 Scoped, 確保在請求範圍內獨立使用
 builder.Services.AddScoped<JobScheduleService>(); // 註冊 JobSchedule 管理服務

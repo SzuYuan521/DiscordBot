@@ -15,6 +15,11 @@ namespace DiscordBot.Data
         public DbSet<DiscordChannel> DiscordChannels { get; set; }
         public DbSet<RoleMagicPact> RoleMagicPacts { get; set; }
 
+        public DbSet<GuildMember> GuildMembers { get; set; } // 幫會會員
+        public DbSet<OneLineBond> OneLineBonds { get; set; } // 一線牽
+
+        public DbSet<MemberStatistics> MemberStatistics { get; set; } // 統計
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -40,6 +45,8 @@ namespace DiscordBot.Data
             {
                 entity.HasKey(m => m.Id);
                 entity.HasIndex(m => m.MessageId).IsUnique();
+                entity.Property(m => m.MessageType)
+                    .HasConversion<int>();
             });
 
             // RoleMagicPact 與 DiscordChannel 關聯
@@ -63,6 +70,38 @@ namespace DiscordBot.Data
                 .WithMany()
                 .HasForeignKey(p => p.DiscordRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 設定 GuildMember
+            modelBuilder.Entity<GuildMember>(entity =>
+            {
+                entity.HasKey(g => g.DiscordId);
+                entity.Property(g => g.JoinDate).HasDefaultValueSql("NOW()");
+            });
+
+            // 設定 OneLineBond
+            modelBuilder.Entity<OneLineBond>(entity =>
+            {
+                entity.HasKey(b => b.BondId);
+
+                // 與 GuildMembers 的外鍵關聯
+                entity.HasOne(b => b.Member)
+                    .WithMany(g => g.OneLineBonds)
+                    .HasForeignKey(b => b.DiscordId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 設定 MemberStatistics 表
+            modelBuilder.Entity<MemberStatistics>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+                entity.HasIndex(m => m.DiscordId).IsUnique();
+
+                // 設定與 GuildMember 的關聯
+                entity.HasOne(m => m.GuildMember)
+                      .WithOne(g => g.Statistics)
+                      .HasForeignKey<MemberStatistics>(m => m.DiscordId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

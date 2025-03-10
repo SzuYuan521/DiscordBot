@@ -3,6 +3,7 @@ using System;
 using DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250309091402_AddMessageTypeToMonitoredMessage")]
+    partial class AddMessageTypeToMonitoredMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,32 +89,6 @@ namespace DiscordBot.Migrations
                     b.ToTable("DiscordRoles");
                 });
 
-            modelBuilder.Entity("DiscordBot.Models.GuildMember", b =>
-                {
-                    b.Property<decimal>("DiscordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<int?>("CharacterClass")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("DiscordName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("JoinDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.HasKey("DiscordId");
-
-                    b.ToTable("GuildMembers");
-                });
-
             modelBuilder.Entity("DiscordBot.Models.JobSchedule", b =>
                 {
                     b.Property<int>("Id")
@@ -154,28 +131,6 @@ namespace DiscordBot.Migrations
                     b.ToTable("JobSchedules");
                 });
 
-            modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("DiscordId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<bool>("TaishanMove")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DiscordId")
-                        .IsUnique();
-
-                    b.ToTable("MemberStatistics");
-                });
-
             modelBuilder.Entity("DiscordBot.Models.MonitoredMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -199,34 +154,6 @@ namespace DiscordBot.Migrations
                         .IsUnique();
 
                     b.ToTable("MonitoredMessages");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.OneLineBond", b =>
-                {
-                    b.Property<int>("BondId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BondId"));
-
-                    b.Property<decimal>("DiscordId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<int?>("PartnerId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PartnerName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("BondId");
-
-                    b.HasIndex("DiscordId");
-
-                    b.ToTable("OneLineBonds");
                 });
 
             modelBuilder.Entity("DiscordBot.Models.RoleMagicPact", b =>
@@ -260,28 +187,6 @@ namespace DiscordBot.Migrations
                     b.ToTable("RoleMagicPacts");
                 });
 
-            modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
-                {
-                    b.HasOne("DiscordBot.Models.GuildMember", "GuildMember")
-                        .WithOne("Statistics")
-                        .HasForeignKey("DiscordBot.Models.MemberStatistics", "DiscordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GuildMember");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.OneLineBond", b =>
-                {
-                    b.HasOne("DiscordBot.Models.GuildMember", "Member")
-                        .WithMany("OneLineBonds")
-                        .HasForeignKey("DiscordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
-                });
-
             modelBuilder.Entity("DiscordBot.Models.RoleMagicPact", b =>
                 {
                     b.HasOne("DiscordBot.Models.DiscordChannel", "DiscordChannel")
@@ -308,14 +213,6 @@ namespace DiscordBot.Migrations
                     b.Navigation("DiscordRole");
 
                     b.Navigation("MonitoredMessage");
-                });
-
-            modelBuilder.Entity("DiscordBot.Models.GuildMember", b =>
-                {
-                    b.Navigation("OneLineBonds");
-
-                    b.Navigation("Statistics")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

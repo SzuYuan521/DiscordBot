@@ -1,4 +1,6 @@
-﻿namespace DiscordBot.Models
+﻿using DiscordBot.Enums;
+
+namespace DiscordBot.Models
 {
     public class MonitoredMessage
     {
@@ -13,6 +15,11 @@
         /// 訊息所在的頻道 ID
         /// </summary>
         public ulong ChannelId { get; set; }
+
+        /// <summary>
+        /// 訊息類型
+        /// </summary>
+        public MessageType MessageType { get; set; }
     }
 
 }

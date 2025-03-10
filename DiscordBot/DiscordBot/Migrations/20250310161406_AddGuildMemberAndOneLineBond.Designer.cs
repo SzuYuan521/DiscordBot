@@ -3,6 +3,7 @@ using System;
 using DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250310161406_AddGuildMemberAndOneLineBond")]
+    partial class AddGuildMemberAndOneLineBond
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -154,28 +157,6 @@ namespace DiscordBot.Migrations
                     b.ToTable("JobSchedules");
                 });
 
-            modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("DiscordId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<bool>("TaishanMove")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DiscordId")
-                        .IsUnique();
-
-                    b.ToTable("MemberStatistics");
-                });
-
             modelBuilder.Entity("DiscordBot.Models.MonitoredMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -260,17 +241,6 @@ namespace DiscordBot.Migrations
                     b.ToTable("RoleMagicPacts");
                 });
 
-            modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
-                {
-                    b.HasOne("DiscordBot.Models.GuildMember", "GuildMember")
-                        .WithOne("Statistics")
-                        .HasForeignKey("DiscordBot.Models.MemberStatistics", "DiscordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GuildMember");
-                });
-
             modelBuilder.Entity("DiscordBot.Models.OneLineBond", b =>
                 {
                     b.HasOne("DiscordBot.Models.GuildMember", "Member")
@@ -313,9 +283,6 @@ namespace DiscordBot.Migrations
             modelBuilder.Entity("DiscordBot.Models.GuildMember", b =>
                 {
                     b.Navigation("OneLineBonds");
-
-                    b.Navigation("Statistics")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

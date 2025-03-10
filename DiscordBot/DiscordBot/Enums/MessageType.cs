@@ -6,5 +6,7 @@
         Event,         // 活動通知
         Reminder,      // 提醒
         GuildWars,    // 幫會戰
+        ReactionRole,     // 身份組控制
+        Statistics,   // 統計
     }
 }
