@@ -391,9 +391,13 @@ namespace DiscordBot.Services
 
                 foreach (var member in members)
                 {
-                    string roles = member.Roles.Count > 1
-                        ? string.Join(", ", member.Roles.Where(r => r.Id != 1335798324275449929).Select(r => r.Name))
+                    string nickname = string.IsNullOrEmpty(member.Nickname) ? member.Username : member.Nickname;
+                    string roles = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
+                        ? string.Join(", ", member.Roles
+                            .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
+                            .Select(r => r.Name))
                         : "無身分組";
+
 
                     sb.AppendLine($"🆔 {member.Id} | **{member.Username}#{member.Discriminator}** | {roles}");
 
@@ -405,11 +409,12 @@ namespace DiscordBot.Services
                         {
                             DiscordId = member.Id,
                             DiscordName = $"{member.Username}#{member.Discriminator}",
+                            MemberName = nickname,
                             CharacterClass = CharacterClassType.None,
                             JoinDate = DateTime.UtcNow
                         });
 
-                        Console.WriteLine($"✅ 新增成員 {member.Username}#{member.Discriminator} 至 GuildMembers");
+                        Console.WriteLine($"✅ 新增成員 {nickname} ({member.Username}#{member.Discriminator}) 至 GuildMembers");
                     }
                 }
 

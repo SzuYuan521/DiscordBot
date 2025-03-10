@@ -4,8 +4,6 @@ namespace DiscordBot.Models
 {
     public class GuildMember
     {
-        public int Id { get; set; }  // PK，自動遞增的主鍵
-
         /// <summary>
         /// Discord 使用者 ID (唯一)
         /// </summary>
@@ -15,6 +13,11 @@ namespace DiscordBot.Models
         /// Discord 使用者名稱
         /// </summary>
         public string DiscordName { get; set; }
+
+        /// <summary>
+        /// 伺服器內的暱稱
+        /// </summary>
+        public string MemberName { get; set; }
 
         /// <summary>
         /// 遊戲職業
