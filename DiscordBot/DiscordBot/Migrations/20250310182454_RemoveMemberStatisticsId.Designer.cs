@@ -3,6 +3,7 @@ using System;
 using DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250310182454_RemoveMemberStatisticsId")]
+    partial class RemoveMemberStatisticsId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -157,13 +160,22 @@ namespace DiscordBot.Migrations
 
             modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<bool>("TaishanMove")
                         .HasColumnType("boolean");
 
-                    b.HasKey("DiscordId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscordId")
+                        .IsUnique();
 
                     b.ToTable("MemberStatistics");
                 });

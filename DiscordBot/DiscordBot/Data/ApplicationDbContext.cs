@@ -94,8 +94,7 @@ namespace DiscordBot.Data
             // 設定 MemberStatistics 表
             modelBuilder.Entity<MemberStatistics>(entity =>
             {
-                entity.HasKey(m => m.Id);
-                entity.HasIndex(m => m.DiscordId).IsUnique();
+                entity.HasKey(m => m.DiscordId);
 
                 // 設定與 GuildMember 的關聯
                 entity.HasOne(m => m.GuildMember)

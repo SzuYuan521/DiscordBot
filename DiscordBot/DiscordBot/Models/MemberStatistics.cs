@@ -5,7 +5,6 @@
     /// </summary>
     public class MemberStatistics
     {
-        public int Id { get; set; } // PK
 
         /// <summary>
         /// Discord 使用者 ID
