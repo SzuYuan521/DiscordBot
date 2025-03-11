@@ -59,6 +59,9 @@ Task.Run(async () =>
     isBotReady = true;
 });
 
+// 啟用靜態文件服務
+app.UseStaticFiles();
+
 /*
 // 取得 BotService 服務並啟動 Discord 機器人
 var discordBotService = app.Services.GetRequiredService<BotService>();

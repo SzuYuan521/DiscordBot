@@ -18,5 +18,10 @@ namespace DiscordBot.Models
         /// 對應的統計類型
         /// </summary>
         public StatisticsType StatisticsType { get; set; }
+
+        /// <summary>
+        /// 類型名稱
+        /// </summary>
+        public string StatisticsName { get; set; }
     }
 }
