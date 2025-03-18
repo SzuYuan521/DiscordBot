@@ -591,10 +591,10 @@ namespace DiscordBot.Services
                 foreach (var member in members)
                 {
                     string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username : member.DisplayName;
-                    bool hasValidRole = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657);
+                    bool hasValidRole = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657 || r.Id == 1335798371272753223);
                     string roles = hasValidRole
                         ? string.Join(", ", member.Roles
-                            .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
+                            .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657 || r.Id == 1335798371272753223)
                             .Select(r => r.Name))
                         : "無身分組";
 
@@ -664,67 +664,5 @@ namespace DiscordBot.Services
                 Console.WriteLine(sb.ToString()); // 在控制台輸出
             }
         }
-
-
-
-        /*
-        /// <summary>
-        /// 用來補建成員資料
-        /// </summary>
-        private async Task OnBotReady()
-        {
-            var guild = _client.GetGuild(1335798324275449929);
-            if (guild == null)
-            {
-                Console.WriteLine("❌ 找不到指定的伺服器！");
-                return;
-            }
-
-            Console.WriteLine($"✅ 讀取伺服器：{guild.Name}");
-
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-                // 獲取所有成員
-                var members = guild.Users;
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine($"📋 **伺服器 {guild.Name} 成員列表** (總共 {members.Count} 人):\n");
-
-                foreach (var member in members)
-                {
-                    string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username : member.DisplayName;
-                    string roles = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
-                        ? string.Join(", ", member.Roles
-                            .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
-                            .Select(r => r.Name))
-                        : "無身分組";
-
-
-                    sb.AppendLine($"🆔 {member.Id} | **{member.Username}#{member.Discriminator}** | {roles}");
-
-                    // 檢查資料庫是否已經有該成員
-                    var existingMember = await dbContext.GuildMembers.FindAsync(member.Id);
-                    if (existingMember == null)
-                    {
-                        dbContext.GuildMembers.Add(new GuildMember
-                        {
-                            DiscordId = member.Id,
-                            DiscordName = $"{member.Username}#{member.Discriminator}",
-                            MemberName = nickname,
-                            CharacterClass = CharacterClassType.None,
-                            JoinDate = DateTime.UtcNow
-                        });
-
-                        Console.WriteLine($"✅ 新增成員 {nickname} ({member.Username}#{member.Discriminator}) 至 GuildMembers");
-                    }
-                }
-
-                // 儲存變更
-                await dbContext.SaveChangesAsync();
-                Console.WriteLine(sb.ToString()); // 在控制台輸出
-            }
-        }*/
-
     }
 }
