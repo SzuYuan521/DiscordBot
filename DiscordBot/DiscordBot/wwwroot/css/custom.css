@@ -1,0 +1,20 @@
+﻿/* 自訂按鈕樣式 */
+.pink-btn {
+    background-color: #ffccd5;
+    color: white;
+    font-weight: bold;
+    padding: 12px 24px;
+    font-size: 18px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.pink-btn:hover {
+    background-color: #ffb3c1;
+    box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+}
+
+.pink-btn:active {
+    background-color: #ff99ac !important;
+    box-shadow: 0 2px 4px rgba(255, 20, 147, 0.5);
+}

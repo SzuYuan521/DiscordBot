@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - DiscordBot</title>
+    <title>@ViewData["Title"] - 逆水寒小幫手</title>
 
     <!-- 引用 Bootstrap 和 jQuery -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/custom.css" asp-append-version="true" />
     <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
 
@@ -20,9 +21,8 @@
         <nav class="navbar navbar-expand-lg navbar-light custom-navbar">
             <div class="container">
                 <!-- 品牌 Logo -->
-                <a class="navbar-brand fw-bold text-white" asp-controller="Home" asp-action="Index">DiscordBot</a>
-
-                <!-- 響應式展開按鈕 -->
+                <a class="navbar-brand fw-bold text-white" asp-controller="Home" asp-action="Index">至高無上</a>
+                <!-- RWD 展開按鈕 -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                         aria-controls="navbarNav" aria-expanded="false" aria-label="切換導航">
                     <span class="navbar-toggler-icon"></span>
@@ -55,11 +55,11 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted text-center py-3">
+    <!--footer class="border-top footer text-muted text-center py-3">
         <div class="container">
             &copy; 2024 DiscordBot - <a asp-controller="Home" asp-action="Privacy" class="text-dark">隱私政策</a>
         </div>
-    </footer>
+    </!--footer-->
 
     <!-- 確保 jQuery 和 Bootstrap JS 只加載一次 -->
     <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>

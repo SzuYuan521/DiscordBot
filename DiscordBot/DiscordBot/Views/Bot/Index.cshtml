@@ -7,36 +7,13 @@
 
     <!-- 按鈕 -->
     <div class="d-flex justify-content-center mt-4">
-        <button id="reloadTaishanMove" class="btn custom-btn px-4 py-2 shadow">🔄 重新載入泰山移數據</button>
-        <button id="updateGuildMembers" class="btn custom-btn px-4 py-2 shadow ms-3">🔄 更新成員資料</button>
+        <button id="reloadTaishanMove" class="btn pink-btn px-4 py-2 shadow">🔄 重新載入泰山移數據</button>
+        <button id="updateGuildMembers" class="btn pink-btn px-4 py-2 shadow ms-3">🔄 更新成員資料</button>
     </div>
 
     <!-- 訊息顯示 -->
     <div id="reloadMessage" class="text-center mt-3 text-dark fw-bold"></div>
 </div>
-
-@section Styles {
-    <style>
-        .custom-btn {
-            background-color: #ffccd5;
-            color: white;
-            font-weight: bold;
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-            .custom-btn:hover {
-                background-color: #ffb3c1;
-                box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
-            }
-
-            .custom-btn:active {
-                background-color: #ff99ac !important;
-                box-shadow: 0 2px 4px rgba(255, 20, 147, 0.5);
-            }
-    </style>
-}
-
 @section Scripts {
     <script>
         $(document).ready(function () {

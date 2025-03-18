@@ -25,14 +25,14 @@
 
     <!-- 提交按鈕 -->
     <div class="d-flex justify-content-center">
-        <button id="createBond" class="btn custom-btn px-4 py-2 shadow">建立一線牽</button>
+        <button id="createBond" class="btn pink-btn px-4 py-2 shadow">建立一線牽</button>
     </div>
 
     <!-- 一線牽關係圖 -->
     <div class="mt-5">
         <h3 class="text-center text-dark">目前一線牽關係</h3>
         <div class="d-flex justify-content-center">
-            <button id="loadBonds" class="btn custom-btn px-4 py-2 shadow">🔍 查詢一線牽關係</button>
+            <button id="loadBonds" class="btn pink-btn px-4 py-2 shadow">🔍 查詢一線牽關係</button>
         </div>
 
         <!-- 重要：添加一個容器來放置圖表 -->
@@ -67,72 +67,54 @@
 
 @section Styles {
     <style>
-        .custom-btn {
-            background-color: #ffccd5;
-            color: white;
-            font-weight: bold;
-            border: none;
-            transition: all 0.3s ease;
+            /* 分開顯示關係圖 */
+        .bond-group {
+            border: 2px solid #ffb3c1;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
         }
 
-            .custom-btn:hover {
-                background-color: #ffb3c1;
-                box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
-            }
+        .bond-title {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
 
-            .custom-btn:active {
-                background-color: #ff99ac !important;
-                box-shadow: 0 2px 4px rgba(255, 20, 147, 0.5);
-            }
+        .bond-graph {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            min-height: 150px;
+        }
 
-             /* 分開顯示關係圖 */
-            .bond-group {
-                border: 2px solid #ffb3c1;
-                padding: 10px;
-                margin: 10px;
-                border-radius: 10px;
-                background-color: #fff;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-            }
+        .bond-node {
+            padding: 8px 12px;
+            margin: 5px;
+            background-color: #ffb3c1;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
 
-            .bond-title {
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 10px;
-            }
+        .bond-link {
+            border-bottom: 2px solid #ff99ac;
+            width: 30px;
+            margin: 5px;
+        }
 
-            .bond-graph {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-                min-height: 150px;
-            }
+        /* 彈窗樣式 */
+        .modal-header {
+            background-color: #f8d7da;
+        }
 
-            .bond-node {
-                padding: 8px 12px;
-                margin: 5px;
-                background-color: #ffb3c1;
-                color: white;
-                border-radius: 5px;
-                font-weight: bold;
-                text-align: center;
-            }
-
-            .bond-link {
-                border-bottom: 2px solid #ff99ac;
-                width: 30px;
-                margin: 5px;
-            }
-
-            /* 彈窗樣式 */
-            .modal-header {
-                background-color: #f8d7da;
-            }
-
-            .modal-footer button {
-                background-color: #ffccd5;
-            }
+        .modal-footer button {
+            background-color: #ffccd5;
+        }
     </style>
 }
 
