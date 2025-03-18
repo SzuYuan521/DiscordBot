@@ -1,0 +1,455 @@
+﻿@{
+    ViewData["Title"] = "一線牽管理";
+}
+
+<!-- 整體背景設為淡粉紅色 -->
+<div class="container mt-5 p-4 rounded shadow-lg" style="background-color: #ffe4e1;">
+    <h2 class="text-center text-dark">💖 一線牽管理</h2>
+
+    <!-- 成員選擇下拉選單 -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="member1" class="form-label text-dark">選擇成員1：</label>
+            <select id="member1" class="form-select border-2 shadow-sm">
+                <option value="">請選擇成員...</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="member2" class="form-label text-dark">選擇成員2：</label>
+            <select id="member2" class="form-select border-2 shadow-sm">
+                <option value="">請選擇成員...</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 提交按鈕 -->
+    <div class="d-flex justify-content-center">
+        <button id="createBond" class="btn custom-btn px-4 py-2 shadow">建立一線牽</button>
+    </div>
+
+    <!-- 一線牽關係圖 -->
+    <div class="mt-5">
+        <h3 class="text-center text-dark">目前一線牽關係</h3>
+        <div class="d-flex justify-content-center">
+            <button id="loadBonds" class="btn custom-btn px-4 py-2 shadow">🔍 查詢一線牽關係</button>
+        </div>
+
+        <!-- 重要：添加一個容器來放置圖表 -->
+        <div id="bondContainer" class="mt-4"></div>
+        <div class="bonds-container"></div>
+    </div>
+
+
+
+
+    <!-- 彈窗 -->
+    <div id="confirmationModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">確認一線牽</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="modalMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmBond">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .custom-btn {
+            background-color: #ffccd5;
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+            .custom-btn:hover {
+                background-color: #ffb3c1;
+                box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+            }
+
+            .custom-btn:active {
+                background-color: #ff99ac !important;
+                box-shadow: 0 2px 4px rgba(255, 20, 147, 0.5);
+            }
+
+             /* 分開顯示關係圖 */
+            .bond-group {
+                border: 2px solid #ffb3c1;
+                padding: 10px;
+                margin: 10px;
+                border-radius: 10px;
+                background-color: #fff;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            }
+
+            .bond-title {
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .bond-graph {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                min-height: 150px;
+            }
+
+            .bond-node {
+                padding: 8px 12px;
+                margin: 5px;
+                background-color: #ffb3c1;
+                color: white;
+                border-radius: 5px;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .bond-link {
+                border-bottom: 2px solid #ff99ac;
+                width: 30px;
+                margin: 5px;
+            }
+
+            /* 彈窗樣式 */
+            .modal-header {
+                background-color: #f8d7da;
+            }
+
+            .modal-footer button {
+                background-color: #ffccd5;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 加載成員下拉選單
+            $.get("/GuildMember/GetAllMembers", function (data) {
+                let member1Select = $("#member1");
+                let member2Select = $("#member2");
+                member1Select.empty();
+                member2Select.empty();
+
+                member1Select.append('<option value="">請選擇成員1...</option>');
+                member2Select.append('<option value="">請選擇成員2...</option>');
+
+                data.forEach(member => {
+                    member1Select.append(`<option value="${member.discordId}">${member.memberName}</option>`);
+                    member2Select.append(`<option value="${member.discordId}">${member.memberName}</option>`);
+                });
+            });
+
+            // 按鈕點擊事件
+            $("#createBond").click(function () {
+                const member1 = $("#member1").val();
+                const member2 = $("#member2").val();
+
+                if (!member1 || !member2 || member1 === member2) {
+                    alert("請選擇兩個不同的成員！");
+                    return;
+                }
+
+                // 顯示確認彈窗
+                $("#modalMessage").text(`確定要建立 ${$("#member1 option:selected").text()} 和 ${$("#member2 option:selected").text()} 的一線牽關係嗎？`);
+                $('#confirmationModal').modal('show');
+            });
+
+            // 確認建立一線牽
+            $("#confirmBond").click(function () {
+                const member1 = $("#member1").val();
+                const member2 = $("#member2").val();
+
+                // 禁用按鈕防止重複提交
+                $("#confirmBond").prop("disabled", true).text("建立中...");
+
+                // 發送請求創建一線牽關係
+                $.post("/GuildMember/CreateBond", { memberId1: member1, memberId2: member2 }, function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#confirmationModal').modal('hide');
+                        // 重新加載關係圖
+                        loadOneLineBonds();
+                    } else {
+                        alert("建立一線牽時發生錯誤：" + response.message);
+                    }
+                }).fail(function () {
+                    alert("伺服器錯誤，請稍後再試！");
+                }).always(function () {
+                    // 解除按鈕禁用
+                    $("#confirmBond").prop("disabled", false).text("確認");
+                });
+            });
+
+            // 使用 D3.js 來繪製分組的一線牽關係網絡圖
+            function loadOneLineBonds() {
+                $.get("/GuildMember/GetAllBonds", function (data) {
+                    console.log("📢 Debug: 取得一線牽 JSON:", data);
+
+                    // 清空原有的 SVG 容器
+                    const bondContainer = $("#bondContainer");
+                    bondContainer.empty();
+
+                    // 移除先前可能存在的關係圖容器
+                    $(".bonds-container").remove();
+
+                    if (!data || data.length === 0) {
+                        // 使用 D3 正確地在 SVG 中添加文本
+                        const svg = d3.select("#bondContainer");
+                        svg.append("text")
+                            .attr("x", "50%")
+                            .attr("y", "50%")
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "middle")
+                            .text("目前沒有一線牽關係");
+                        return;
+                    }
+
+                    // 創建外層容器來放置分組的關係圖
+                    const bondsContainer = $('<div class="bonds-container"></div>');
+                    bondContainer.after(bondsContainer);
+
+                    // 分組處理
+                    let groups = findConnectedGroups(data);
+                    console.log("📌 Debug: 分組結果", groups);
+
+                    // 為每個分組創建獨立的 SVG 容器
+                    let groupIndex = 1;
+                    groups.forEach(members => {
+                        // 創建一個新的 div 來容納這個組的 SVG
+                        const groupId = `bondGraph-${groupIndex}`;
+                        const groupDiv = $(`<div class="bond-group mt-4 p-3 rounded shadow">
+                            <h4 class="text-center">📌 第 ${groupIndex} 組一線牽關係</h4>
+                            <div id="${groupId}-container" style="width:100%; height:300px;"></div>
+                        </div>`);
+
+                        bondsContainer.append(groupDiv);
+
+                        // 重要：確保 DOM 已更新後再繪製圖表
+                        setTimeout(() => {
+                            // 創建 SVG 元素
+                            const svgElement = d3.select(`#${groupId}-container`)
+                                .append("svg")
+                                .attr("id", groupId)
+                                .attr("width", "100%")
+                                .attr("height", "100%");
+
+                            // 過濾出屬於這個組的連接
+                            const groupBonds = data.filter(bond => {
+                                const memberId = bond.MemberId ?? bond.memberId;
+                                const partnerId = bond.PartnerId ?? bond.partnerId;
+                                return members.has(memberId) || members.has(partnerId);
+                            });
+
+                            // 在新創建的 SVG 中繪製圖表
+                            drawGraph(`#${groupId}`, groupBonds);
+                        }, 0);
+
+                        groupIndex++;
+                    });
+                }).fail(function () {
+                    console.error("❌ 請求失敗: /GuildMember/GetAllBonds");
+                });
+            }
+
+            // 尋找連通分組
+            function findConnectedGroups(bonds) {
+                // 創建一個圖結構來表示連接
+                const graph = new Map();
+
+                // 建立圖結構
+                bonds.forEach(bond => {
+                    const memberId = bond.MemberId ?? bond.memberId;
+                    const partnerId = bond.PartnerId ?? bond.partnerId;
+
+                    if (!graph.has(memberId)) graph.set(memberId, new Set());
+                    if (!graph.has(partnerId)) graph.set(partnerId, new Set());
+
+                    graph.get(memberId).add(partnerId);
+                    graph.get(partnerId).add(memberId);
+                });
+
+                // 使用 DFS 找出所有連通分量
+                const visited = new Set();
+                const groups = [];
+
+                function dfs(node, group) {
+                    visited.add(node);
+                    group.add(node);
+
+                    // 遍歷所有相鄰節點
+                    if (graph.has(node)) {
+                        for (const neighbor of graph.get(node)) {
+                            if (!visited.has(neighbor)) {
+                                dfs(neighbor, group);
+                            }
+                        }
+                    }
+                }
+
+                // 對每個未訪問的節點進行 DFS
+                for (const node of graph.keys()) {
+                    if (!visited.has(node)) {
+                        const group = new Set();
+                        dfs(node, group);
+                        groups.push(group);
+                    }
+                }
+
+                return groups;
+            }
+
+            function drawGraph(svgSelector, bonds) {
+                console.log("📢 Debug: 繪製圖表", svgSelector, bonds);
+
+                // 確保選擇器存在
+                const svgElement = d3.select(svgSelector);
+                if (svgElement.empty()) {
+                    console.error("❌ 找不到 SVG 元素:", svgSelector);
+                    return;
+                }
+
+                const svgNode = svgElement.node();
+                const width = svgNode.clientWidth || svgNode.parentNode.clientWidth;
+                const height = svgNode.clientHeight || svgNode.parentNode.clientHeight;
+
+                // 清除現有的 SVG 內容
+                svgElement.selectAll("*").remove();
+
+                // 創建節點和連接數據
+                const nodesMap = new Map();
+                const linksData = [];
+
+                bonds.forEach(bond => {
+                    let memberId = bond.MemberId ?? bond.memberId;
+                    let partnerId = bond.PartnerId ?? bond.partnerId;
+                    let memberName = bond.MemberName ?? bond.memberName;
+                    let partnerName = bond.PartnerName ?? bond.partnerName;
+
+                    if (!nodesMap.has(memberId)) {
+                        nodesMap.set(memberId, { id: memberId, name: memberName });
+                    }
+                    if (!nodesMap.has(partnerId)) {
+                        nodesMap.set(partnerId, { id: partnerId, name: partnerName });
+                    }
+
+                    linksData.push({
+                        source: memberId,
+                        target: partnerId
+                    });
+                });
+
+                const nodesData = Array.from(nodesMap.values());
+
+                console.log("📌 Debug: 節點", nodesData);
+                console.log("📌 Debug: 連接", linksData);
+
+                // 創建力導向圖
+                const simulation = d3.forceSimulation(nodesData)
+                    .force("link", d3.forceLink(linksData).id(d => d.id).distance(100))
+                    .force("charge", d3.forceManyBody().strength(-250))
+                    .force("center", d3.forceCenter(width / 2, height / 2))
+                    .force("collide", d3.forceCollide(30)); // 添加碰撞力避免節點重疊
+
+                // 繪製連線
+                const link = svgElement.append("g")
+                    .selectAll("line")
+                    .data(linksData)
+                    .enter()
+                    .append("line")
+                    .attr("stroke", "#ffb3c1")
+                    .attr("stroke-width", 2);
+
+                // 繪製節點
+                const node = svgElement.append("g")
+                    .selectAll("circle")
+                    .data(nodesData)
+                    .enter()
+                    .append("circle")
+                    .attr("r", 20)
+                    .attr("fill", "#ffb3c1")
+                    .call(drag(simulation));
+
+                // 添加文字標籤
+                const labels = svgElement.append("g")
+                    .selectAll("text")
+                    .data(nodesData)
+                    .enter()
+                    .append("text")
+                    .text(d => d.name)
+                    .attr("font-size", "12px")
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "2.5em"); // 標籤定位在節點下方
+
+                // 更新位置
+                simulation.on("tick", () => {
+                    // 確保節點不超出邊界
+                    nodesData.forEach(d => {
+                        d.x = Math.max(20, Math.min(width - 20, d.x));
+                        d.y = Math.max(20, Math.min(height - 20, d.y));
+                    });
+
+                    link
+                        .attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => d.target.x)
+                        .attr("y2", d => d.target.y);
+
+                    node
+                        .attr("cx", d => d.x)
+                        .attr("cy", d => d.y);
+
+                    labels
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y);
+                });
+
+                // 定義拖拽行為
+                function drag(simulation) {
+                    function dragstarted(event, d) {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    }
+
+                    function dragged(event, d) {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                    }
+
+                    function dragended(event, d) {
+                        if (!event.active) simulation.alphaTarget(0);
+                        d.fx = null;
+                        d.fy = null;
+                    }
+
+                    return d3.drag()
+                        .on("start", dragstarted)
+                        .on("drag", dragged)
+                        .on("end", dragended);
+                }
+            }
+
+            // 初始加載
+            $("#loadBonds").click(function () {
+                loadOneLineBonds();
+            });
+        });
+    </script>
+}

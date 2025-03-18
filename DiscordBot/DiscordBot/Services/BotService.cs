@@ -43,7 +43,7 @@ namespace DiscordBot.Services
             // 監聽用戶加入事件
             _client.UserJoined += OnUserJoined;
 
-      //      _client.Ready += OnBotReady; // 用來補建成員資料
+            //      _client.Ready += OnBotReady; // 用來補建成員資料
         }
 
         /// <summary>
@@ -132,12 +132,12 @@ namespace DiscordBot.Services
             {
                 var guildMemberService = scope.ServiceProvider.GetRequiredService<GuildMemberService>();
 
-                var existingMember = await guildMemberService.GetMemberByDiscordIdAsync(user.Id);
+                var existingMember = await guildMemberService.GetMemberByDiscordIdAsync((long)user.Id);
                 if (existingMember == null)
                 {
                     var newMember = new GuildMember
                     {
-                        DiscordId = user.Id,
+                        DiscordId = (long)user.Id,
                         DiscordName = user.Username,
                         CharacterClass = CharacterClassType.None,
                         JoinDate = DateTime.UtcNow
@@ -405,7 +405,7 @@ namespace DiscordBot.Services
             var memberStats = await dbContext.MemberStatistics.FindAsync(reaction.UserId);
             if (memberStats == null)
             {
-                memberStats = new MemberStatistics { DiscordId = reaction.UserId };
+                memberStats = new MemberStatistics { DiscordId = (long)reaction.UserId };
                 dbContext.MemberStatistics.Add(memberStats);
             }
 
@@ -450,6 +450,219 @@ namespace DiscordBot.Services
 
             await dbContext.SaveChangesAsync();
             Console.WriteLine($"❌ 更新統計數據: {reaction.UserId} => {config.StatisticsType} (已移除)");
+        }
+
+        /// <summary>
+        /// 補登泰山移
+        /// </summary>
+        /// <returns></returns>
+        public async Task ReloadTaishanMoveData()
+        {
+            var guild = _client.GetGuild(1335798324275449929); // 你的伺服器 ID
+            if (guild == null)
+            {
+                Console.WriteLine("❌ 找不到指定的伺服器！");
+                return;
+            }
+
+            Console.WriteLine($"🔄 重新讀取 {guild.Name} 的泰山移表情數據");
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                // 從資料庫查找所有有監聽的泰山移訊息
+                var monitoredMessages = await dbContext.MonitoredMessages
+                    .Where(m => m.MessageType == Enums.MessageType.Statistics) // 限制只查找統計類型的監聽訊息
+                    .ToListAsync();
+
+                if (!monitoredMessages.Any())
+                {
+                    Console.WriteLine("⚠️ 沒有找到已監聽的泰山移訊息！");
+                    return;
+                }
+
+                Console.WriteLine($"🔍 共找到 {monitoredMessages.Count} 則泰山移監聽訊息");
+
+                foreach (var monitoredMessage in monitoredMessages)
+                {
+                    var channel = guild.GetTextChannel(monitoredMessage.ChannelId);
+                    if (channel == null)
+                    {
+                        Console.WriteLine($"⚠️ 無法取得頻道 {monitoredMessage.ChannelId}，跳過！");
+                        continue;
+                    }
+
+                    var message = await channel.GetMessageAsync(monitoredMessage.MessageId);
+                    if (message == null)
+                    {
+                        Console.WriteLine($"⚠️ 找不到訊息 {monitoredMessage.MessageId}，跳過！");
+                        continue;
+                    }
+
+                    // 讀取 StatisticsConfig 取得正確的表情名稱
+                    var taishanMoveConfig = await dbContext.StatisticsConfigs
+                        .FirstOrDefaultAsync(s => s.StatisticsType == StatisticsType.TaishanMove);
+
+                    if (taishanMoveConfig == null)
+                    {
+                        Console.WriteLine("⚠️ 沒有找到泰山移的表情設定，請確認 StatisticsConfig 是否正確設置！");
+                        return;
+                    }
+
+                    string taishanMoveEmoji = taishanMoveConfig.Emoji; // 取得資料庫中設定的表情符號
+                    Console.WriteLine($"✅ 讀取泰山移表情符號: {taishanMoveEmoji}");
+
+                    // 取得這則訊息的所有表情回應
+                    foreach (var reaction in message.Reactions)
+                    {
+                        if (reaction.Key.Name == taishanMoveEmoji) // 確保表情是泰山移
+                        {
+                            var users = await message.GetReactionUsersAsync(reaction.Key, 100).FlattenAsync(); // 取得表情回應的用戶
+                            foreach (var user in users)
+                            {
+                                if (user.IsBot) continue; // 忽略機器人
+
+                                var existingMember = await dbContext.GuildMembers.FindAsync((long)user.Id);
+                                if (existingMember == null)
+                                {
+                                    // **補紀錄到資料庫**
+                                    var newMember = new GuildMember
+                                    {
+                                        DiscordId = (long)user.Id,
+                                        DiscordName = user.Username,
+                                        MemberName = user.Username, // 暫時用 Discord Name，稍後可更新
+                                        CharacterClass = CharacterClassType.None,
+                                        JoinDate = DateTime.UtcNow
+                                    };
+
+                                    dbContext.GuildMembers.Add(newMember);
+                                    Console.WriteLine($"✅ 新增成員 {user.Username} (ID: {user.Id})");
+                                }
+
+                                // 更新統計
+                                var memberStats = await dbContext.MemberStatistics.FindAsync((long)user.Id);
+                                if (memberStats == null)
+                                {
+                                    memberStats = new MemberStatistics { DiscordId = (long)user.Id, TaishanMove = true };
+                                    dbContext.MemberStatistics.Add(memberStats);
+                                }
+                                else
+                                {
+                                    memberStats.TaishanMove = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine("✅ 泰山移數據同步完成！");
+            }
+        }
+
+        /// <summary>
+        /// 更新所有幫會成員的 Discord ID 和 MemberName
+        /// </summary>
+        public async Task UpdateGuildMembers()
+        {
+            var guild = _client.GetGuild(1335798324275449929);
+            if (guild == null)
+            {
+                Console.WriteLine("❌ 找不到指定的伺服器！");
+                return;
+            }
+
+            Console.WriteLine($"✅ 讀取伺服器：{guild.Name}");
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                // 獲取所有成員
+                var members = guild.Users;
+                var dbMembers = await dbContext.GuildMembers.ToListAsync(); // 取得資料庫中的所有成員
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine($"📋 **更新 {guild.Name} 伺服器成員資料** (共 {members.Count} 人):\n");
+
+                HashSet<long> validMemberIds = new HashSet<long>(); // 記錄仍然有效的成員ID
+
+                foreach (var member in members)
+                {
+                    string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username : member.DisplayName;
+                    bool hasValidRole = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657);
+                    string roles = hasValidRole
+                        ? string.Join(", ", member.Roles
+                            .Where(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657)
+                            .Select(r => r.Name))
+                        : "無身分組";
+
+                    var existingMember = await dbContext.GuildMembers.FindAsync((long)member.Id);
+
+                    if (existingMember == null && hasValidRole)
+                    {
+                        // **新增新成員**
+                        dbContext.GuildMembers.Add(new GuildMember
+                        {
+                            DiscordId = (long)member.Id,
+                            DiscordName = $"{member.Username}#{member.Discriminator}",
+                            MemberName = nickname,
+                            CharacterClass = CharacterClassType.None,
+                            JoinDate = DateTime.UtcNow,
+                        });
+
+                        sb.AppendLine($"✅ 新增成員: {nickname} ({member.Username}#{member.Discriminator}) | 身分組: {roles}");
+                    }
+                    else if (existingMember != null)
+                    {
+                        if (!hasValidRole)
+                        {
+                            // **如果該成員沒有符合的身分組，則移除**
+                            dbContext.GuildMembers.Remove(existingMember);
+                            sb.AppendLine($"❌ 移除成員: {nickname} ({member.Username}#{member.Discriminator}) | 原因: 無符合的身分組");
+                        }
+                        else
+                        {
+                            // **更新已存在成員的資料**
+                            bool updated = false;
+
+                            if (existingMember.MemberName != nickname)
+                            {
+                                existingMember.MemberName = nickname;
+                                updated = true;
+                            }
+
+                            if (existingMember.DiscordName != $"{member.Username}#{member.Discriminator}")
+                            {
+                                existingMember.DiscordName = $"{member.Username}#{member.Discriminator}";
+                                updated = true;
+                            }
+
+                            if (updated)
+                            {
+                                sb.AppendLine($"🔄 更新成員: {nickname} ({member.Username}#{member.Discriminator})");
+                            }
+
+                            validMemberIds.Add((long)member.Id); // 保留此成員
+                        }
+                    }
+                }
+
+                // **刪除資料庫中不存在於 Discord 的成員**
+                foreach (var dbMember in dbMembers)
+                {
+                    if (!validMemberIds.Contains(dbMember.DiscordId))
+                    {
+                        dbContext.GuildMembers.Remove(dbMember);
+                        sb.AppendLine($"❌ 移除成員: {dbMember.MemberName} (ID: {dbMember.DiscordId}) | 原因: 已不是幫眾");
+                    }
+                }
+
+                // 儲存變更
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine(sb.ToString()); // 在控制台輸出
+            }
         }
 
 

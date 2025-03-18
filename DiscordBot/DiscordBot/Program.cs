@@ -68,9 +68,25 @@ var discordBotService = app.Services.GetRequiredService<BotService>();
 await discordBotService.StartAsync();*/
 
 
-// 設定 MVC 路由, 將預設 Controller 設定為 BotController
+// 設定 MVC 路由
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Bot}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}"); // 預設路由
+
+app.MapControllerRoute(
+    name: "guildMember",
+    pattern: "GuildMember/{action=Index}/{id?}",
+    defaults: new { controller = "GuildMember", action = "Index" }); // GuildMemberController 專用路由
+
+app.MapControllerRoute(
+    name: "bot",
+    pattern: "Bot/{action=Index}/{id?}",
+    defaults: new { controller = "Bot", action = "Index" }); // BotController 專用路由
+
+
+/*
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Bot}/{action=Index}/{id?}");*/
 
 app.Run();

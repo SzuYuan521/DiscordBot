@@ -7,7 +7,7 @@ namespace DiscordBot.Models
         /// <summary>
         /// Discord 使用者 ID (唯一)
         /// </summary>
-        public ulong DiscordId { get; set; }  // 這是 Discord 使用者的 ID
+        public long DiscordId { get; set; }  // 這是 Discord 使用者的 ID
 
         /// <summary>
         /// Discord 使用者名稱

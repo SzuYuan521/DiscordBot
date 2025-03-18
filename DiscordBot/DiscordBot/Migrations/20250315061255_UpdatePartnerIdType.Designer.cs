@@ -3,6 +3,7 @@ using System;
 using DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250315061255_UpdatePartnerIdType")]
+    partial class UpdatePartnerIdType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,11 +91,9 @@ namespace DiscordBot.Migrations
 
             modelBuilder.Entity("DiscordBot.Models.GuildMember", b =>
                 {
-                    b.Property<long>("DiscordId")
+                    b.Property<decimal>("DiscordId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("DiscordId"));
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<int?>("CharacterClass")
                         .HasColumnType("integer");
@@ -159,8 +160,8 @@ namespace DiscordBot.Migrations
 
             modelBuilder.Entity("DiscordBot.Models.MemberStatistics", b =>
                 {
-                    b.Property<long>("DiscordId")
-                        .HasColumnType("bigint");
+                    b.Property<decimal>("DiscordId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<bool>("TaishanMove")
                         .HasColumnType("boolean");
@@ -203,15 +204,11 @@ namespace DiscordBot.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BondId"));
 
-                    b.Property<long>("DiscordId")
-                        .HasColumnType("bigint");
+                    b.Property<decimal>("DiscordId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<string>("MemberName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long?>("PartnerId")
-                        .HasColumnType("bigint");
+                    b.Property<decimal?>("PartnerId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("PartnerName")
                         .IsRequired()

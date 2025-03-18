@@ -9,7 +9,7 @@
         /// <summary>
         /// Discord 使用者 ID
         /// </summary>
-        public ulong DiscordId { get; set; }
+        public long DiscordId { get; set; }
 
         /// <summary>
         /// PVP 裝備 是否裝備泰山移

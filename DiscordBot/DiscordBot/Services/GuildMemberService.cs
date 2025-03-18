@@ -24,7 +24,7 @@ namespace DiscordBot.Services
         /// <summary>
         /// 根據 Discord ID 取得幫會成員
         /// </summary>
-        public async Task<GuildMember?> GetMemberByDiscordIdAsync(ulong discordId)
+        public async Task<GuildMember?> GetMemberByDiscordIdAsync(long discordId)
         {
             return await _dbContext.GuildMembers.FirstOrDefaultAsync(m => m.DiscordId == discordId);
         }
@@ -50,7 +50,7 @@ namespace DiscordBot.Services
         /// <summary>
         /// 刪除幫會成員
         /// </summary>
-        public async Task DeleteMemberAsync(ulong discordId)
+        public async Task DeleteMemberAsync(long discordId)
         {
             var member = await _dbContext.GuildMembers.FirstOrDefaultAsync(m => m.DiscordId == discordId);
             if (member != null)

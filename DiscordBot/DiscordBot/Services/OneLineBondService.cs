@@ -24,7 +24,7 @@ namespace DiscordBot.Services
         /// <summary>
         /// 根據會員 ID 取得一線牽關係
         /// </summary>
-        public async Task<List<OneLineBond>> GetBondsByMemberIdAsync(ulong discordId)
+        public async Task<List<OneLineBond>> GetBondsByMemberIdAsync(long discordId)
         {
             return await _dbContext.OneLineBonds
                 .Where(b => b.DiscordId == discordId)

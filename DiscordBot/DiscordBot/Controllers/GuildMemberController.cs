@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using DiscordBot.Enums;
 using DiscordBot.Dtos;
+using System.Diagnostics;
 
 namespace DiscordBot.Controllers
 {
@@ -20,6 +21,18 @@ namespace DiscordBot.Controllers
         }
 
         public IActionResult Index()
+        {
+            return View();
+        }
+
+        // 一線牽
+        public IActionResult OneLineBond()
+        {
+            return View();
+        }
+
+        // 統計數據
+        public IActionResult Statistics()
         {
             return View();
         }
@@ -58,7 +71,7 @@ namespace DiscordBot.Controllers
                         .Select(m => new GuildMemberDto
                         {
                             MemberName = m.GuildMember.MemberName,  // 伺服器內的暱稱
-                            DiscordId = m.GuildMember.DiscordId     // Discord ID
+                            DiscordId = (ulong)m.GuildMember.DiscordId     // Discord ID
                         })
                         .ToListAsync();
 
@@ -79,5 +92,94 @@ namespace DiscordBot.Controllers
             });
         }
 
+        /// <summary>
+        /// 取得所有幫會成員(用於一線牽選單)
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> GetAllMembers()
+        {
+            var members = await _dbContext.GuildMembers
+                .Select(m => new
+                {
+                    DiscordId = m.DiscordId.ToString(), // 轉換為字串
+                    m.MemberName
+                })
+                .ToListAsync();
+
+            return Json(members);
+        }
+
+        /// <summary>
+        /// 創建一線牽
+        /// </summary>
+        /// <param name="memberId1">成員1</param>
+        /// <param name="memberId2">成員2</param>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<IActionResult> CreateBond(string memberId1, string memberId2)
+        {
+            if (string.IsNullOrEmpty(memberId1) || string.IsNullOrEmpty(memberId2) || memberId1 == memberId2)
+            {
+                return Json(new { success = false, message = "請選擇不同的成員！" });
+            }
+
+            // 轉換為 long (確保前端傳來的 string 可以正常轉換)
+            if (!long.TryParse(memberId1, out long member1Id) || !long.TryParse(memberId2, out long member2Id))
+            {
+                return Json(new { success = false, message = "成員 ID 格式錯誤！" });
+            }
+
+            var member1 = await _dbContext.GuildMembers.FirstOrDefaultAsync(m => m.DiscordId == member1Id);
+            var member2 = await _dbContext.GuildMembers.FirstOrDefaultAsync(m => m.DiscordId == member2Id);
+
+            if (member1 == null || member2 == null)
+            {
+                return Json(new { success = false, message = "某個成員不存在" });
+            }
+
+            // 檢查是否已存在這兩人的一線牽關係
+            bool bondExists = await _dbContext.OneLineBonds.AnyAsync(b =>
+                (b.DiscordId == member1Id && b.PartnerId == member2Id) ||
+                (b.DiscordId == member2Id && b.PartnerId == member1Id));
+
+            if (bondExists)
+            {
+                return Json(new { success = false, message = $"{member1.MemberName} 和 {member2.MemberName} 已經有一線牽關係！" });
+            }
+
+            // 新增一線牽關係
+            var oneLineBond = new OneLineBond
+            {
+                DiscordId = member1.DiscordId,
+                MemberName = member1.MemberName,
+                PartnerId = member2.DiscordId,
+                PartnerName = member2.MemberName,
+                UpdateTime = DateTime.UtcNow,
+            };
+
+            _dbContext.OneLineBonds.Add(oneLineBond);
+            await _dbContext.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"{member1.MemberName} 和 {member2.MemberName} 已建立一線牽關係！" });
+        }
+
+        /// <summary>
+        /// 取得所有一線牽關係
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> GetAllBonds()
+        {
+            var bonds = await _dbContext.OneLineBonds
+                .Select(b => new
+                {
+                    MemberId = b.DiscordId,
+                    MemberName = b.MemberName,
+                    PartnerId = b.PartnerId,
+                    PartnerName = b.PartnerName
+                })
+                .ToListAsync();
+
+            return Json(bonds);
+        }
     }
 }

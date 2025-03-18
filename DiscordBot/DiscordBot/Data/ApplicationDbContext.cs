@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using DiscordBot.Models;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DiscordBot.Data
 {
@@ -76,19 +77,29 @@ namespace DiscordBot.Data
             modelBuilder.Entity<GuildMember>(entity =>
             {
                 entity.HasKey(g => g.DiscordId);
-                entity.Property(g => g.JoinDate).HasDefaultValueSql("NOW()");
+
+                // 確保 DiscordId 為 bigint (對應 PostgreSQL)
+                entity.Property(g => g.DiscordId)
+                      .HasColumnType("bigint");
+
+                // 設定 JoinDate 預設值為 NOW()
+                entity.Property(g => g.JoinDate)
+                      .HasDefaultValueSql("NOW()");
             });
+
 
             // 設定 OneLineBond
             modelBuilder.Entity<OneLineBond>(entity =>
             {
                 entity.HasKey(b => b.BondId);
 
-                // 與 GuildMembers 的外鍵關聯
                 entity.HasOne(b => b.Member)
-                    .WithMany(g => g.OneLineBonds)
-                    .HasForeignKey(b => b.DiscordId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                      .WithMany(g => g.OneLineBonds)
+                      .HasForeignKey(b => b.DiscordId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(b => b.DiscordId).HasColumnType("bigint");
+                entity.Property(b => b.PartnerId).HasColumnType("bigint");
             });
 
             // 設定 MemberStatistics 表
