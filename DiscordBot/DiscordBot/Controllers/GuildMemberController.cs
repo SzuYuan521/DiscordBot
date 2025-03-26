@@ -8,16 +8,19 @@ using System.Collections.Generic;
 using DiscordBot.Enums;
 using DiscordBot.Dtos;
 using System.Diagnostics;
+using DiscordBot.Services;
 
 namespace DiscordBot.Controllers
 {
     public class GuildMemberController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly BotService _botService;
 
-        public GuildMemberController(ApplicationDbContext dbContext)
+        public GuildMemberController(ApplicationDbContext dbContext, BotService botService)
         {
             _dbContext = dbContext;
+            _botService = botService;
         }
 
         public IActionResult Index()
@@ -33,6 +36,15 @@ namespace DiscordBot.Controllers
 
         // 統計數據
         public IActionResult Statistics()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// 顯示成員管理頁面（ManagingMembers.cshtml）
+        /// </summary>
+        [HttpGet]
+        public IActionResult ManagingMembers()
         {
             return View();
         }
@@ -180,6 +192,34 @@ namespace DiscordBot.Controllers
                 .ToListAsync();
 
             return Json(bonds);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ReloadTaishanMoveData()
+        {
+            try
+            {
+                await _botService.ReloadTaishanMoveData();
+                return Json(new { success = true, message = "泰山移表情數據已重新載入並同步至資料庫！" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"重新載入時發生錯誤: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateGuildMembers()
+        {
+            try
+            {
+                await _botService.UpdateGuildMembers();
+                return Json(new { success = true, message = "更新所有幫會成員的 Discord ID 和 MemberName！" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"重新載入時發生錯誤: {ex.Message}" });
+            }
         }
     }
 }

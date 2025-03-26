@@ -6,6 +6,7 @@ using DiscordBot.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Text;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Services
 {
@@ -526,12 +527,12 @@ namespace DiscordBot.Services
                                 var existingMember = await dbContext.GuildMembers.FindAsync((long)user.Id);
                                 if (existingMember == null)
                                 {
-                                    // **補紀錄到資料庫**
+                                    // 補紀錄到資料庫
                                     var newMember = new GuildMember
                                     {
                                         DiscordId = (long)user.Id,
                                         DiscordName = user.Username,
-                                        MemberName = user.Username, // 暫時用 Discord Name，稍後可更新
+                                        MemberName = user.Username,
                                         CharacterClass = CharacterClassType.None,
                                         JoinDate = DateTime.UtcNow
                                     };
@@ -590,7 +591,7 @@ namespace DiscordBot.Services
 
                 foreach (var member in members)
                 {
-                    string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username : member.DisplayName;
+                    string nickname = string.IsNullOrEmpty(member.DisplayName) ? member.Username.ExtractCleanName() : member.DisplayName.ExtractCleanName();
                     bool hasValidRole = member.Roles.Any(r => r.Id == 1335806149651464222 || r.Id == 1335798409688518657 || r.Id == 1335798371272753223);
                     string roles = hasValidRole
                         ? string.Join(", ", member.Roles
