@@ -1,5 +1,6 @@
 ﻿using System;
 using DiscordBot.Enums;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Models
 {

@@ -1,4 +1,7 @@
-﻿namespace DiscordBot.Models
+﻿using DiscordBot.Extensions;
+using System;
+
+namespace DiscordBot.Models
 {
     /// <summary>
     /// 幫會一線牽關係

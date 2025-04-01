@@ -1,4 +1,5 @@
 ﻿using DiscordBot.Enums;
+using DiscordBot.Extensions;
 using System.ComponentModel.DataAnnotations;
 
 namespace DiscordBot.Models

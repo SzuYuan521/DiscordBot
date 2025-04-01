@@ -9,6 +9,7 @@ using DiscordBot.Enums;
 using DiscordBot.Dtos;
 using System.Diagnostics;
 using DiscordBot.Services;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Controllers
 {
@@ -16,11 +17,16 @@ namespace DiscordBot.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly BotService _botService;
+        private readonly GuildMemberService _guildMemberService;
+        private readonly GuildTeamService _guildTeamService;
 
-        public GuildMemberController(ApplicationDbContext dbContext, BotService botService)
+        public GuildMemberController(ApplicationDbContext dbContext, BotService botService, GuildMemberService guildMemberService, GuildTeamService guildTeamService)
         {
             _dbContext = dbContext;
             _botService = botService;
+            _guildMemberService = guildMemberService;
+            _guildTeamService = guildTeamService;
+            _guildTeamService = guildTeamService;
         }
 
         public IActionResult Index()
@@ -105,10 +111,40 @@ namespace DiscordBot.Controllers
         }
 
         /// <summary>
-        /// 取得所有幫會成員(用於一線牽選單)
+        /// 取得所有幫會成員(用於成員清單)
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> GetAllMembers()
+        {
+            var classColorMap = await _guildMemberService.GetCharacterClassInfoMapAsync();
+
+            var members = await _dbContext.GuildMembers
+                .Select(m => new
+                {
+                    DiscordId = m.DiscordId.ToString(),
+                    m.MemberName,
+                    m.CharacterClass
+                })
+                .ToListAsync();
+
+            var result = members.Select(m => new
+            {
+                m.DiscordId,
+                m.MemberName,
+                m.CharacterClass,
+                Color = m.CharacterClass != CharacterClassType.None && classColorMap.ContainsKey((CharacterClassType)m.CharacterClass)
+                            ? classColorMap[(CharacterClassType)m.CharacterClass].Color
+                            : null
+            });
+
+            return Json(result);
+        }
+
+        /// <summary>
+        /// 取得所有幫會成員(用於一線牽選單)
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> GetAllMembersName()
         {
             var members = await _dbContext.GuildMembers
                 .Select(m => new
@@ -199,7 +235,8 @@ namespace DiscordBot.Controllers
         {
             try
             {
-                await _botService.ReloadTaishanMoveData();
+                var guild = _botService.GetClient().GetGuild(1335798324275449929);
+                await _guildMemberService.ReloadTaishanMoveData(guild);
                 return Json(new { success = true, message = "泰山移表情數據已重新載入並同步至資料庫！" });
             }
             catch (Exception ex)
@@ -213,7 +250,8 @@ namespace DiscordBot.Controllers
         {
             try
             {
-                await _botService.UpdateGuildMembers();
+                var guild = _botService.GetClient().GetGuild(1335798324275449929);
+                await _guildMemberService.UpdateGuildMembers(guild);
                 return Json(new { success = true, message = "更新所有幫會成員的 Discord ID 和 MemberName！" });
             }
             catch (Exception ex)

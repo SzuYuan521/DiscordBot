@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using DiscordBot.Data;
 using DiscordBot.Models;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Services
 {

@@ -1,4 +1,5 @@
 ﻿using DiscordBot.Enums;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Models
 {
@@ -28,6 +29,11 @@ namespace DiscordBot.Models
         /// 會員加入幫會 DC 的時間
         /// </summary>
         public DateTime JoinDate { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// 更新資料的時間
+        /// </summary>
+        public DateTime? UpdateTime { get; set; }
 
         /// <summary>
         /// 成員的統計資訊

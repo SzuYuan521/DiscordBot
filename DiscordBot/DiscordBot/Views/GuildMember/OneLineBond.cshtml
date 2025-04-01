@@ -123,7 +123,7 @@
     <script>
         $(document).ready(function () {
             // 加載成員下拉選單
-            $.get("/GuildMember/GetAllMembers", function (data) {
+            $.get("/GuildMember/GetAllMembersName", function (data) {
                 let member1Select = $("#member1");
                 let member2Select = $("#member2");
                 member1Select.empty();
