@@ -47,10 +47,19 @@ namespace DiscordBot.Controllers
         }
 
         /// <summary>
-        /// 顯示成員管理頁面（ManagingMembers.cshtml）
+        /// 顯示成員管理頁面(ManagingMembers.cshtml)
         /// </summary>
         [HttpGet]
         public IActionResult ManagingMembers()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// 顯示隊伍表頁面
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult GuildTeams()
         {
             return View();
         }
@@ -257,6 +266,57 @@ namespace DiscordBot.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"重新載入時發生錯誤: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// 取得所有隊伍與成員
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> GetAllTeams()
+        {
+            var structure = await _guildTeamService.GetFullTeamStructureAsync();
+
+            var members = _dbContext.GuildMembers.ToDictionary(m => m.DiscordId);
+
+            var result = structure.Select(g => new {
+                groupName = g.GroupName,
+                teams = g.GuildTeams.Select(t => new {
+                    teamId = t.Id,
+                    teamName = t.TeamName,
+                    order = t.Order,
+                    members = t.TeamMembers
+                        .OrderBy(m => m.Position)
+                        .Select(m => new {
+                            id = m.Id,
+                            discordId = m.DiscordMemberId.ToString(),
+                            position = m.Position,
+                            memberName = members.TryGetValue(m.DiscordMemberId, out var member) ? member.MemberName : "未知成員",
+                            classType = members.TryGetValue(m.DiscordMemberId, out member) ? member.CharacterClass.ToString() : null
+                        })
+                })
+            });
+
+            return Json(result);
+        }
+
+        /// <summary>
+        /// 儲存所有隊伍成員
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<IActionResult> SaveAllTeams([FromBody] List<GuildTeam> updatedTeams)
+        {
+            try
+            {
+                await _guildTeamService.SaveTeamStructureAsync(updatedTeams);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
     }

@@ -32,7 +32,7 @@ builder.Services.AddSingleton<BotService>(); // 註冊 Discord Bot 服務
 builder.Services.AddControllersWithViews(); // 註冊 MVC Controller 和 View
 builder.Services.AddScoped<GuildMemberService>(); // 幫會成員
 builder.Services.AddScoped<OneLineBondService>(); // 一線牽
-
+builder.Services.AddScoped<GuildTeamService>(); // 幫會聯賽隊伍
 
 // 註冊與資料庫相關的服務, 使用 Scoped, 確保在請求範圍內獨立使用
 builder.Services.AddScoped<JobScheduleService>(); // 註冊 JobSchedule 管理服務
@@ -82,11 +82,5 @@ app.MapControllerRoute(
     name: "bot",
     pattern: "Bot/{action=Index}/{id?}",
     defaults: new { controller = "Bot", action = "Index" }); // BotController 專用路由
-
-
-/*
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Bot}/{action=Index}/{id?}");*/
 
 app.Run();

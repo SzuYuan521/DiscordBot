@@ -20,6 +20,9 @@ namespace DiscordBot.Data
         public DbSet<OneLineBond> OneLineBonds { get; set; } // 一線牽
         public DbSet<MemberStatistics> MemberStatistics { get; set; } // 統計
         public DbSet<StatisticsConfig> StatisticsConfigs { get; set; } // 存放 Emoji 與統計類型對應關係
+        public DbSet<TeamGroup> TeamGroups { get; set; }
+        public DbSet<GuildTeam> GuildTeams { get; set; }
+        public DbSet<GuildTeamMember> GuildTeamMembers { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -117,6 +120,29 @@ namespace DiscordBot.Data
             modelBuilder.Entity<StatisticsConfig>()
                 .HasIndex(s => s.Emoji)
                 .IsUnique(); // 確保 Emoji 唯一
+
+            // TeamGroup(團隊)
+            modelBuilder.Entity<TeamGroup>()
+                .HasMany(g => g.GuildTeams)
+                .WithOne(t => t.TeamGroup)
+                .HasForeignKey(t => t.TeamGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // GuildTeam(隊伍)
+            modelBuilder.Entity<GuildTeam>()
+                .HasMany(t => t.TeamMembers)
+                .WithOne(m => m.GuildTeam)
+                .HasForeignKey(m => m.GuildTeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // GuildTeamMember(團隊成員)
+            modelBuilder.Entity<GuildTeamMember>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.DiscordMemberId).HasColumnType("bigint");
+                entity.Property(m => m.Position).IsRequired();
+            });
+
         }
     }
 }

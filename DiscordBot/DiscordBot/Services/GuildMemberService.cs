@@ -172,6 +172,21 @@ namespace DiscordBot.Services
                     });
 
                     sb.AppendLine($"✅ 新增成員: {nickname} ({member.Username}#{member.Discriminator}) | 身分組: {roles}");
+
+                    // 查詢目前請假名單已有的最大 position
+                    var maxPosition = _dbContext.GuildTeamMembers
+                        .Where(tm => tm.GuildTeamId == 0)
+                        .Select(tm => (int?)tm.Position)
+                        .Max() ?? -1; // 若沒人, 預設 -1
+
+                    // 新增 GuildTeamMember
+                    _dbContext.GuildTeamMembers.Add(new GuildTeamMember
+                    {
+                        GuildTeamId = 0,
+                        DiscordMemberId = (long)member.Id,
+                        Position = 0 // 或 -1 代表尚未編排
+                    });
+                    sb.AppendLine($"分配至預設隊伍(請假名單): {nickname}");
                 }
                 else if (existingMember != null)
                 {
@@ -222,6 +237,19 @@ namespace DiscordBot.Services
                 {
                     _dbContext.GuildMembers.Remove(dbMember);
                     sb.AppendLine($"❌ 移除成員: {dbMember.MemberName} (ID: {dbMember.DiscordId}) | 原因: 已不是幫眾");
+
+                    var teamMembersToRemove = await _dbContext.GuildTeamMembers
+                        .Where(tm => tm.DiscordMemberId == dbMember.DiscordId)
+                        .ToListAsync();
+
+                    if (teamMembersToRemove.Any())
+                    {
+                        _dbContext.GuildTeamMembers.RemoveRange(teamMembersToRemove);
+                        foreach (var tm in teamMembersToRemove)
+                        {
+                            sb.AppendLine($"從隊伍中移除成員 {dbMember.MemberName} ");
+                        }
+                    }
                 }
             }
 

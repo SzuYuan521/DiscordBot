@@ -18,3 +18,32 @@
     background-color: #ff99ac !important;
     box-shadow: 0 2px 4px rgba(255, 20, 147, 0.5);
 }
+
+.pink-card-title {
+    background-color: #ffa7bf;
+    color: white;
+}
+
+.card, .card-body {
+    background-color: white !important;
+}
+
+.empty-slot {
+    background-color: #f9f9f9;
+}
+
+.leave-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.member-slot {
+    vertical-align: middle;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 80px;
+    min-height: 30px;
+    background-color: #f8f8f8;
+}

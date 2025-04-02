@@ -1,0 +1,371 @@
+﻿@{
+    ViewData["Title"] = "聯賽隊伍";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center text-dark">聯賽隊伍編排系統</h2>
+    <div class="text-center d-flex flex-wrap justify-content-center gap-2 mt-4">
+        <button id="saveTeams" class="btn pink-btn mx-2">💾 儲存編排</button>
+        <button id="sortLeaveByClass" class="btn pink-btn mx-2">⇅ 請假名單按職業排序</button>
+        <button id="exportImage" class="btn pink-btn mx-2">🖼 匯出圖片</button>
+    </div>
+    <div id="teamBoard" class="row mt-4"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        let teamData = [];
+
+        function getClassColor(classType) {
+            const colorMap = {
+                Diviner: "#4c64e8",
+                SpiritualHealer: "#eeaeae",
+                Ironclad: "#f5c67e",
+                Spiritcaller: "#8a47ef",
+                Dreambreaker: "#a2dddb",
+                Bloodriver: "#f06260",
+                Dragonsong: "#65e3b4"
+            };
+            return colorMap[classType] || "";
+        }
+
+        function renderTeams() {
+            console.log("teamData preview:", teamData);
+            const board = $("#teamBoard");
+            board.empty();
+
+            teamData.forEach(group => {
+                const groupHtml = $(`
+                            <div class="col-12 mb-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header fw-bold text-center pink-card-title">${group.groupName}</div>
+                                    <div class="card-body">
+                                        <table class="table table-bordered text-center align-middle">
+                                            <tbody>
+                                                ${group.teams.map(team => {
+                    // 處理請假名單(teamId === 0)
+                    if (team.teamId === 0) {
+                        const leaveCount = team.members.length;
+
+                        return `
+                                    <tr>
+                                        <th class="text-nowrap" style="width:100px;">
+                                            請假 ${leaveCount}人
+                                        </th>
+                                        <td colspan="8">
+                                            <div class="d-flex flex-wrap gap-1 leave-list" data-team-id="0">
+                                                ${team.members.map(m => `
+                                                    <div class="member-slot fw-bold text-center"
+                                                        draggable="true"
+                                                        data-id="${m.id}"
+                                                        data-discord-id="${m.discordId}"
+                                                        style="background-color:${getClassColor(m.classType)};">
+                                                        ${m.memberName}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                    }
+
+                    // 一般隊伍(固定8格)
+                    const members = Array(8).fill(null);
+                    team.members.forEach(m => {
+                        if (m.position >= 0 && m.position < 8) {
+                            members[m.position] = m;
+                        }
+                    });
+
+                    const cells = members.map(m => {
+                        if (m) {
+                            return `
+                                            <td class="member-slot fw-bold text-center"
+                                            draggable="true"
+                                            data-id="${m.id}"
+                                            data-discord-id="${m.discordId}"
+                                            style="background-color:${getClassColor(m.classType)};">
+                                            ${m.memberName}
+                                        </td>
+                                    `;
+                        } else {
+                            return `
+                                        <td class="member-slot empty-slot"
+                                            draggable="true"
+                                            data-id=""
+                                            data-discord-id=""
+                                            style="background-color:transparent;">
+                                        </td>
+                                    `;
+                        }
+                    }).join('');
+
+                    return `
+                                <tr data-team-id="${team.teamId}">
+                                    <th class="text-nowrap">
+                                        <span class="team-name-text" data-team-id="${team.teamId}">${team.teamName}</span>
+                                        <input type="text" class="form-control form-control-sm team-name-input d-none" data-team-id="${team.teamId}" style="width: auto;" />
+                                        <button class="btn btn-sm edit-team-name-btn" data-team-id="${team.teamId}" title="編輯隊名">✏️</button>
+                                    </th>
+                                    ${cells}
+                                </tr>
+                            `;
+                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+
+                board.append(groupHtml);
+            });
+        }
+
+        function enableDragAndDrop() {
+            let dragged = null;
+
+            $(document).on("dragstart", ".member-slot", function (e) {
+                dragged = this;
+                e.originalEvent.dataTransfer.effectAllowed = "move";
+            });
+
+            // 允許拖曳進入目標
+            $(document).on("dragover", ".member-slot, .leave-list", function (e) {
+                e.preventDefault();
+                e.originalEvent.dataTransfer.dropEffect = "move";
+            });
+
+            // 新增: 允許丟進 .leave-list 空白區域
+            $(document).on("drop", ".leave-list", function (e) {
+                e.preventDefault();
+                if (!dragged) return;
+
+                const $dragged = $(dragged);
+                const $fromTeam = $dragged.closest("tr, .leave-list");
+                const fromTeamId = $fromTeam.data("team-id");
+
+                const $targetList = $(this); // leave-list 本身
+                const toTeamId = 0;
+
+                console.log(`🟨 拖曳到請假名單 from teamId=${fromTeamId}`);
+
+                // 如果來源不是請假名單, 從原位置移除並加進來
+                if (fromTeamId !== 0) {
+                    // 正確補回空格
+                    if ($fromTeam.is("tr")) {
+                        const $empty = $("<td>")
+                            .addClass("member-slot empty-slot text-center")
+                            .attr("data-id", "")
+                            .attr("data-discord-id", "")
+                            .attr("draggable", "true")
+                            .css({
+                                "background-color": "transparent"
+                            });
+
+                        $dragged.closest("td").replaceWith($empty);
+                    }
+
+                    // 將人移入請假名單
+                    $targetList.append($dragged);
+                }
+
+                dragged = null;
+            });
+
+            // 原本成員之間的 drop 行為(人對人)
+            $(document).on("drop", ".member-slot", function (e) {
+                e.preventDefault();
+                if (!dragged || dragged === this) return;
+
+                const $dragged = $(dragged);
+                const $target = $(this);
+
+                swapMemberCells($dragged, $target);
+                dragged = null;
+            });
+        }
+
+        // 專用函式: 交換兩格成員格子的內容與屬性
+        function swapMemberCells($cell1, $cell2) {
+            const tmp = {
+                html: $cell1.html(),
+                id: $cell1.data("id"),
+                discordId: $cell1.data("discord-id"),
+                bgColor: $cell1.css("background-color"),
+                class: $cell1.attr("class")
+            };
+
+            // cell1 <- cell2
+            $cell1.html($cell2.html());
+            $cell1.data("id", $cell2.data("id"));
+            $cell1.data("discord-id", $cell2.data("discord-id"));
+            $cell1.css("background-color", $cell2.css("background-color"));
+            $cell1.attr("class", $cell2.attr("class"));
+
+            // cell2 <- 原本 cell1
+            $cell2.html(tmp.html);
+            $cell2.data("id", tmp.id);
+            $cell2.data("discord-id", tmp.discordId);
+            $cell2.css("background-color", tmp.bgColor);
+            $cell2.attr("class", tmp.class);
+        }
+
+
+        function collectData() {
+            const result = [];
+
+            $("tr").each(function () {
+                const teamId = $(this).data("team-id");
+                const members = [];
+
+                $(this).find(".member-slot").each(function (index) {
+                    const discordId = $(this).data("discord-id");
+                    const id = $(this).data("id");
+
+                    if (discordId && discordId !== "") {
+                        members.push({
+                            id: id,
+                            discordMemberId: discordId,
+                            position: index  // 根據所在 index 記錄 position(不管是哪個隊伍)
+                        });
+                    }
+                });
+
+                // 抓 teamName
+                let teamName = $(`.team-name-text[data-team-id='${teamId}']`).text().trim();
+
+                result.push({
+                    id: teamId,
+                    teamName: teamName,
+                    teamMembers: members
+                });
+            });
+
+            return result;
+        }
+
+        $(document).ready(function () {
+            $.get("/GuildMember/GetAllTeams", function (data) {
+                teamData = data;
+                renderTeams();
+                enableDragAndDrop();
+            });
+
+            $("#saveTeams").click(function () {
+                const $btn = $(this);
+                const originalText = $btn.html();
+
+                $btn.prop("disabled", true).html("⏳ 儲存中...");
+
+                const data = collectData();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/GuildMember/SaveAllTeams",
+                    data: JSON.stringify(data),
+                    contentType: "application/json",
+                    success: res => {
+                        if (res.success) {
+                            $btn.html("✅ 儲存成功！");
+                            setTimeout(() => location.reload(), 800); // 0.8秒後重整
+                        } else {
+                            alert("❌ 儲存失敗：" + res.message);
+                            $btn.prop("disabled", false).html(originalText);
+                        }
+                    },
+                    error: err => {
+                        alert("❌ 發生錯誤，請稍後再試");
+                        $btn.prop("disabled", false).html(originalText);
+                    }
+                });
+            });
+
+            $("#sortLeaveByClass").click(function () {
+                // 找出請假名單
+                for (const group of teamData) {
+                    for (const team of group.teams) {
+                        if (team.teamId === 0) {
+                            team.members.sort((a, b) => {
+                                const order = {
+                                    Diviner: 1,
+                                    SpiritualHealer: 2,
+                                    Ironclad: 3,
+                                    Spiritcaller: 4,
+                                    Dreambreaker: 5,
+                                    Bloodriver: 6,
+                                    Dragonsong: 7,
+                                    None: 99
+                                };
+
+                                const aClass = a.classType || "None";
+                                const bClass = b.classType || "None";
+
+                                return (order[aClass] || 99) - (order[bClass] || 99);
+                            });
+
+                            // 更新排序後的 position 值
+                            team.members.forEach((m, i) => m.position = i);
+                        }
+                    }
+                }
+
+                // 重新渲染畫面
+                renderTeams();
+            });
+
+            // 點擊 ✏️ 編輯按鈕
+            $(document).on("click", ".edit-team-name-btn", function () {
+                const teamId = $(this).data("team-id");
+                const $text = $(`.team-name-text[data-team-id='${teamId}']`);
+                const $input = $(`.team-name-input[data-team-id='${teamId}']`);
+
+                $input.val($text.text());
+                $text.addClass("d-none");
+                $input.removeClass("d-none").focus();
+            });
+
+            // 編輯隊名時按下 Enter 鍵
+            $(document).on("keydown", ".team-name-input", function (e) {
+                if (e.key === "Enter") {
+                    const teamId = $(this).data("team-id");
+                    const newName = $(this).val().trim();
+
+                    // 更新畫面上的文字
+                    $(`.team-name-text[data-team-id='${teamId}']`).text(newName).removeClass("d-none");
+                    $(this).addClass("d-none");
+
+                    // 更新 teamData 裡的名稱
+                    for (const group of teamData) {
+                        const team = group.teams.find(t => t.teamId == teamId);
+                        if (team) {
+                            team.teamName = newName;
+                        }
+                    }
+                }
+            });
+
+            // 匯出圖片按鈕點擊
+            $("#exportImage").click(function () {
+                const target = document.getElementById("teamBoard");
+
+                html2canvas(target, {
+                    scrollY: -window.scrollY,
+                    backgroundColor: "#ffffff" // 強制白色背景
+                }).then(canvas => {
+                    const now = new Date();
+                    // 台灣時區 UTC+8
+                    const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+                    const dateStr = taiwanTime.toISOString().slice(0, 10).replace(/-/g, '');
+                    const filename = `${dateStr}聯賽隊伍表.png`;
+
+                    const link = document.createElement("a");
+                    link.download = filename;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                });
+            });
+        });
+    </script>
+}
