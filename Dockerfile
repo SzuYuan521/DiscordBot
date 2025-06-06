@@ -22,21 +22,10 @@ RUN dotnet restore "NshmCalculator.MudClient/NshmCalculator.MudClient.csproj"
 # 複製所有文件
 COPY . .
 
-# 設定工作目錄並建立應用
-WORKDIR "/src/NshmCalculator.MudClient"
-RUN dotnet build "NshmCalculator.MudClient.csproj" -c Release -o /app/build
+# 發佈至 publish 資料夾
+WORKDIR /src/NshmCalculator.MudClient
+RUN dotnet publish -c Release -o /app/publish
 
-FROM build AS publish
-
-# 發佈應用
-RUN dotnet publish "NshmCalculator.MudClient.csproj" -c Release -o /app/publish
-
-# 最終映像
-FROM base AS final
-WORKDIR /app
-
-# 複製發佈的應用檔案
-COPY --from=publish /app/publish .
-
-# 設定容器啟動的命令，指定應用程式名稱
-ENTRYPOINT ["dotnet", "NshmCalculator.MudClient.dll"]
+# 執行階段：使用 nginx 伺服器提供靜態內容
+FROM nginx:alpine AS final
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
