@@ -17,7 +17,7 @@ WORKDIR /src
 # 複製 csproj 並還原相依套件
 COPY ["NshmCalculator.MudClient/NshmCalculator.MudClient.csproj", "NshmCalculator.MudClient/"]
 COPY ["NshmCalculator/NshmCalculator.csproj", "NshmCalculator/"]
-COPY ["NshmCalculator.Shared/NshmCalculator.Shared.csproj", "NshmCalculator.Shared/"]
+COPY ["NshmCalcuator/Shared/NshmCalculator.Shared.csproj", "NshmCalcuator/Shared/"]
 RUN dotnet restore "NshmCalculator.MudClient/NshmCalculator.MudClient.csproj"
 
 # 複製所有文件
