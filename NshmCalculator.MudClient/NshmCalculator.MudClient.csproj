@@ -18,18 +18,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <_ContentIncludedByDefault Remove="wwwroot\data\enemyData.json" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Blazor-ApexCharts" Version="5.0.0" />
-		<PackageReference Include="BlazorDownloadFile" Version="2.4.0.2" />
+		<PackageReference Include="Blazor-ApexCharts" Version="3.1.0" />
 		<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.DataAnnotations.Validation" Version="3.2.0-rc1.20223.4" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.11" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.11" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.0" PrivateAssets="all" />
 		<PackageReference Include="MudBlazor" Version="6.17.0" />
-		<PackageReference Include="Tewr.Blazor.FileReader" Version="3.4.0.24340" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -41,7 +35,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Update="wwwroot\data\config_update.json">
+		<Content Update="wwwroot\data\tipsContent.json">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\data\updatelog.json">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 		<Content Update="wwwroot\js\decode.min.js">
@@ -52,9 +49,6 @@
 		</Content>
 		<Content Update="wwwroot\service-worker.published.js">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Update="wwwroot\data\version.json">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 

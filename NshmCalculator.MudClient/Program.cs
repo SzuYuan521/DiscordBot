@@ -1,14 +1,14 @@
-using ApexCharts;
-using BlazorDownloadFile;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
-using NshmCalculator.MudClient;
 using NshmCalculator.MudClient.Utilities;
-using NshmCalculator.MudClient.Utilities.Interface;
-using Tewr.Blazor.FileReader;
+using NshmCalculator.Shared.Models;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using NshmCalculator.MudClient;
+using NshmCalculator.Shared.Models.CalculatorModel.KI;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -18,8 +18,11 @@ var client = new HttpClient
 {
     BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
 };
-builder.Services.AddFileReaderService(options => options.UseWasmSharedBuffer = true);
-builder.Services.AddSingleton(client);
+client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+{
+    NoCache = true
+};
+builder.Services.AddScoped(sp => client);
 builder.Services.AddMudServices(config =>
 {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopCenter;
@@ -33,35 +36,46 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
 });
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddBlazorDownloadFile();
-builder.Services.AddSingleton<IStateContainer, StateContainer>();
-builder.Services.AddApexCharts(option =>
-{
-    option.GlobalOptions = new ApexChartBaseOptions()
-    {
-        
-    };
-});
 
 #region InitConfig
 
-int errorCount = 0;
+UpdateLog[] updateLogs = new UpdateLog[] { };
+Dictionary<string, string> tipsDictionary = new Dictionary<string, string>();
+List<BaseAttributeImprove> attributeImproves = new List<BaseAttributeImprove>();
 
-while (errorCount < 3)
+var newJson = await client.GetStringAsync(ConstText.UpdateLogPath);//–Ë“™¥¶¿Ìª∫¥ÊŒ¥∏¸–¬µƒ«Èøˆ
+if (!string.IsNullOrEmpty(newJson))
 {
-    if (await ConfigHelper.InitAppVersion(client))
+    var logs = JsonSerializer.Deserialize<UpdateLog[]>(newJson);
+    if (logs is { Length: > 0 })
     {
-        break;
+        updateLogs = logs;
     }
-    errorCount++;
 }
 
-ConfigHelper.InitClient(client);
-
-if (errorCount == 3)
+var tipsJson = await client.GetStringAsync(ConstText.TipsJsonPath);
+if (!string.IsNullOrEmpty(tipsJson))
 {
-    throw new Exception("Ëé∑ÂèñÂü∫Á°ÄÈÖçÁΩÆÂ§±Ë¥•ÔºåËØ∑Ê£ÄÊü•ÁΩëÁªú");
+    var dic = JsonSerializer.Deserialize<Dictionary<string, string>>(tipsJson);
+    if (dic != null)
+    {
+        tipsDictionary = dic;
+    }
 }
+
+var improveJson = await client.GetStringAsync(ConstText.ImprovePath);
+if (!string.IsNullOrEmpty(improveJson))
+{
+    var scores = JsonSerializer.Deserialize<List<BaseAttributeImprove>>(improveJson);
+    if (scores != null)
+    {
+        attributeImproves.AddRange(scores);
+    }
+}
+
+builder.Services.AddSingleton(updateLogs);
+builder.Services.AddSingleton(tipsDictionary);
+builder.Services.AddSingleton(attributeImproves);
 
 #endregion
 
